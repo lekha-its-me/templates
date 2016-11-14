@@ -1,0 +1,142 @@
+<link rel="stylesheet" type="text/css" href="/style/css/my_bootstrap.css">
+<%
+_curUserId = curUser.id;
+//_curUserId = 6337428449938981748;
+
+
+
+//в случае, если понадобится отбор по дате
+var now = (Day(Date())) + "." + Month(Date()) + "." + Year(Date()); // Собираю текущую дату, при необходимости можно сделать сдвиг на -1 день
+now = Date(now);
+now = DateOffset(now, -86400);
+now = StrDate(now,false,false);
+//Response.Write(now);
+
+//запрос карточки текущего пользователя
+person = ArrayFirstElem(XQuery("for $e in collaborators where $e/id =" + _curUserId + " return $e"));
+shop = person.position_parent_name;
+
+
+
+//получение результатов по текущему пользователю
+//result = ArrayOptFirstElem(XQuery("for $elem in cc_efficiencys where $elem/login ='"+ person.login +"' order by $elem/date descending return $elem")); // закомменчен, потому что могут быть использованы разные даты при расчете
+
+result = ArrayOptFirstElem(XQuery("for $elem in cc_efficiencys where $elem/login ='"+ person.login +"' and $elem/date >= Date('" + now + "') return $elem"));
+
+//запрос данных по магазину за вчерашний день
+byShop = ArraySelectAll(XQuery("for $elem in cc_efficiencys where contains($elem/login, '" + shop + "') and $elem/date >= Date('" + now + "') return $elem"));
+
+
+if(result != undefined)
+{
+
+	//расчет средних поазателей по магазину
+	az_str = 0;
+	ht = 0;
+	acc = 0;
+	count = ArrayCount(byShop);
+
+
+	for(e in byShop)
+	{
+		az_str += Real(e.az_str);
+		ht += Real(e.ht);
+		acc += Real(e.acc);
+	}
+
+	azAverage = az_str/count;
+	htAverage = ht/count;
+	accAverage = acc/count;
+
+
+	_efficiency = Real(StrReplace(result.efficiency,' ',''));
+	_efficiencyRate = Real(StrReplace(result.efficiency_rate,' ',''));	
+	_az_str = Real(result.az_str);
+	_ht = Real(result.ht);
+	_acc = Real(result.acc);
+	_rating_position = result.rating_position;
+	_total_rating = result.total_rating;
+
+	if(_az_str < azAverage)
+		{
+			%>
+				<script>
+				$(document).ready(function(){
+					$(".az").removeClass("label-default");
+					$(".az").addClass("label-danger");
+				});
+				</script>
+			<%
+		}
+	if(_efficiency < _efficiencyRate)
+		{
+			%>
+				<script>
+				$(document).ready(function(){
+					$(".eff").removeClass("label-default");
+					$(".eff").addClass("label-danger");
+				});
+				</script>
+			<%
+		}
+	if(_ht < htAverage)
+		{
+			%>
+				<script>
+				$(document).ready(function(){
+					$(".ht").removeClass("label-default");
+					$(".ht").addClass("label-danger");
+				});
+				</script>
+			<%
+		}
+	if(_acc < accAverage)
+		{
+			%>
+				<script>
+				$(document).ready(function(){
+					$(".acc").removeClass("label-default");
+					$(".acc").addClass("label-danger");
+				});
+				</script>
+			<%
+		}
+	%>
+
+
+	<div class="panel panel-default">
+		<div class="panel-heading nameOfBlock">Мои результаты</div>
+		<div class="panel-body">
+			<ul class="list-group">
+			  <li class="list-group-item">
+			    <h4>Эффективность<span class="eff label label-default pull-right"><%=_efficiency%></span></h4>
+			  </li>
+			  <li class="list-group-item">
+			   <h4>Доля АЗ+СТР<span class="az label label-default pull-right"><%=_az_str%>%</span></h4>
+			  </li>
+			  <li class="list-group-item">
+			    <h4>Доля ХТ<span class="ht label label-default pull-right"><%=_ht%>%</span></h4>
+			  </li>
+			  <li class="list-group-item">
+			    <h4>Доля АКС<span class="acc label label-default pull-right"><%=_acc%>%</span></h4>
+			  </li>
+			  <li class="list-group-item">
+			    <h4>Место в рейтинге<span class="label label-default pull-right"><%=_rating_position%> / <%=_total_rating%></span></h4>
+			  </li>
+			</ul>
+		</div>
+	</div>
+	<%
+}
+else
+{
+	%>
+		<div class="panel panel-default">
+			<div class="panel-heading nameOfBlock">Мои результаты</div>
+			<div class="panel-body">
+				<p>Ваша должность не принимает участия</p>
+			</div>
+		</div>
+	<%
+}
+%>
