@@ -1,0 +1,55 @@
+<%
+var _title = tools_web.get_web_param(curParams, 'pageTitle', '', true);
+%>
+<link rel="stylesheet" type="text/css" href="/my_eldo/designe/style.css">
+<style type="text/css">
+	.best-head {
+		text-align: center !important;
+	}
+</style>
+
+<div class="best-head">
+	<h1><small><%=_title%></small></h1>
+</div>
+
+<div id="bord_li_a">
+	<!--ÄÎÑÊÀ ÏÎ×¨ÒÀ-->
+
+	<%
+	var colab_array = XQuery("for $elem in cc_best_office_mans where $elem/is_archive!=true() and ForeignElem($elem/person_id)/is_dismiss != true() order by $elem/date_entry descending return $elem");
+		
+	var this_id, colab_doc;
+	for(person in colab_array)
+	{
+		this_id	= "best_" + person.id;
+		colab_doc = OpenDoc(UrlFromDocID(person.person_id)).TopElem;
+		%>
+		<div class="bord-box" id="b_info_<%=this_id;%>">
+			<div class="bord-box-in">
+				<div class="bord-top-box"></div>
+				<div class="bord-body-box">
+					<img class="bord-photo" src="<%=(person.photo != '') ? "download_file.html?file_id=" + person.photo : (colab_doc.pict_url != '') ? colab_doc.pict_url : ""; %> ">
+					<div class="bord-info-box">
+						<div id="b_info_<%=this_id;%>_a">
+							<span class="bord-info-def-name"><%=colab_doc.firstname;%><br><%=colab_doc.lastname;%></span>
+						</div>
+						<div id="b_info_<%=this_id;%>_b" style="display:none;">
+							<span class="bord-info-full-name"><%=colab_doc.firstname;%> <%=colab_doc.lastname;%></span>
+							<span class="bord-info-full-comm"><%=HtmlToPlainText(OpenDoc(UrlFromDocID(person.id)).TopElem.comment);%></span>
+							<span class="bord-info-full-comm"><%=colab_doc.position_parent_name;%></span>
+						</div>
+					</div>
+				</div>
+				<div class="bord-bottom-box"></div>
+			</div>
+		</div>
+		<%
+	}
+
+	%>
+	<div class="clear"></div>
+</div>
+
+
+<script type="text/javascript" src="scripts/jquery.js" language="javascript"></script>
+<script type="text/javascript" src="my_eldo/js/view.js" language="javascript"></script>

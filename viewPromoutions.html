@@ -1,0 +1,762 @@
+<link rel="stylesheet" type="text/css" href="/my_template/templates/promo/promoStyle.css">
+<script src="/scripts/jquery.equalheight.js"></script>
+<script type="text/javascript">
+    $(function(){ $('#promoInfo').equalHeights(); });
+
+    function expandAll()
+    {
+    	$('.panel-collapse').addClass('in');
+    }
+
+    function collapseAll()
+    {
+    	$('.panel-collapse').removeClass('in');
+    }
+
+	function open_in_excel_get(data_string)
+	{
+		$.ajax({
+			type:"POST",
+			url: "custom_web_template.html?object_id=6413279286130115058",
+			data: data_string,
+			error: function(err) { alert("error ajax: "+err); },
+			success: function(resp)
+			{
+				location.href = 'assessment_excel_export.html';
+			}
+		});
+	}
+</script>
+<%
+var data = '';
+var newDate = DateOffset(Date(),604800);
+var count = 0;
+
+var endedPromo = XQuery("for $elem in cc_promoutions where $elem/is_regulations!=true() and Date('"+DateNewTime(DateOffset(Date(),(0-1)*604800))+"') <= $elem/date_to order by $elem/title return $elem");
+
+var newPromo = XQuery("for $elem in cc_promoutions where $elem/date_from > (Date('"+DateNewTime(DateOffset(Date(),(0-1)*604800))+"')) and $elem/is_regulations!=true() order by $elem/title return $elem");
+
+var national = XQuery("for $elem in cc_promoutions where Date() <= $elem/date_to and $elem/business_type='Национальные акции' order by $elem/title return $elem");
+var ce = XQuery("for $elem in cc_promoutions where Date() <= $elem/date_to and $elem/business_type='Отдел СЕ' order by $elem/title return $elem");
+var pe = XQuery("for $elem in cc_promoutions where Date() <= $elem/date_to and $elem/business_type='Отдел РЕ' order by $elem/title return $elem");
+var mda = XQuery("for $elem in cc_promoutions where Date() <= $elem/date_to and $elem/business_type='Отдел КБТ' order by $elem/title return $elem");
+var sda = XQuery("for $elem in cc_promoutions where Date() <= $elem/date_to and $elem/business_type='Отдел МБТ' order by $elem/title return $elem");
+var acc = XQuery("for $elem in cc_promoutions where Date() <= $elem/date_to and $elem/business_type='Отдел АКС' order by $elem/title return $elem");
+var ht = XQuery("for $elem in cc_promoutions where Date() <= $elem/date_to and $elem/business_type='Отдел HiTechnic' order by $elem/title return $elem");
+var sumActualPromo = ArrayCount(national) + ArrayCount(ce) + ArrayCount(pe) + ArrayCount(mda) + ArrayCount(sda) + ArrayCount(acc)+ ArrayCount(ht);
+
+var totalReg = XQuery("for $elem in cc_promoutions where Date() <= $elem/date_to and $elem/regulations_type='Общие регламенты' order by $elem/title return $elem");
+var serviceReg = XQuery("for $elem in cc_promoutions where Date() <= $elem/date_to and $elem/regulations_type='Регламенты по услугам' order by $elem/title return $elem");
+var repairReg = XQuery("for $elem in cc_promoutions where Date() <= $elem/date_to and $elem/regulations_type='Регламенты по сервису' order by $elem/title return $elem");
+var cardsReg = XQuery("for $elem in cc_promoutions where Date() <= $elem/date_to and $elem/regulations_type='Регламенты по картам' order by $elem/title return $elem");
+var shopsReg = XQuery("for $elem in cc_promoutions where Date() <= $elem/date_to and $elem/regulations_type='Регламенты по работе с магазинами' order by $elem/title return $elem");
+var sumRegs = ArrayCount(totalReg) + ArrayCount(serviceReg) + ArrayCount(repairReg) + ArrayCount(cardsReg) + ArrayCount(shopsReg);
+
+var position = curUser.position_name;
+var job = curUser.position_parent_name;
+
+%>
+
+<div class="container-fluid">
+	<div class="row">
+		<div class="panel panel-default">
+			<div class="headTitle panel panel-heading">Акции розницы 
+				<div class="pull-right">
+				<span><%if(position == 'Директор' || position == 'Супервайзер' || position == 'Администратор' || job == 'Отдел продаж')
+				{%>
+					<a class="collapseAll" style="text-decoration:none" onclick="exportToExcel()">Выгрузить в Excel</a>
+				<%}%></span>
+				<span class="collapseAll" onclick="expandAll()"> Развернуть все /</span>
+				<span class="collapseAll" onclick="collapseAll()">Свернуть все</span></div>
+				
+				
+			</div>
+			<div class="ended-promoutions">
+				<p class="title alert alert-info">Закончившиеся акции <span class="pull-right badge ended"><%=count;%></span> </p>
+				<div class="panel-group" id="accordion">
+				<% data += 'ended=';
+					for(item in endedPromo)
+					{
+						if(item.date_to < Date(DateNewTime(DateOffset(item.date_to,604800))) && item.date_to <= DateNewTime(Date()))
+						{
+							count++;
+							descr = OpenDoc(UrlFromDocID(Int(item.id))).TopElem;
+							
+							data += item.title + "|" +  item.date_from + "|" +  item.date_to + "|" + HtmlToPlainText(descr.description) + "---";
+							%>
+							<div class="panel panel-default">
+							    <div class="panel-heading">
+							      <h4 class="panel-title">
+							        <a data-toggle="collapse" data-parent="#accordion" href="#ended_<%=item.id%>">
+							          <%=item.title%>
+							        </a>
+							      </h4>
+							    </div>
+							    <div id="ended_<%=item.id%>" class="panel-collapse collapse">
+							      <div class="panel-body promoInfo" id="promoInfo">
+							        <div class="description"><strong>Описание:<br></strong><%=HtmlToPlainText(descr.description)%></div>
+							        <div class="date"><strong>Срок действия<br></strong>Действует с: <%=item.date_from%> <br>
+							        По: <% if(item.date_to == Date('01.01.2999')) {%>До особого распоряжения<%} else {%> <%=item.date_to %><%} %></div>
+							        <div class="file"><strong>Приказ:<br></strong><a href="<%="download_file.html?file_id=" + item.file%>">Скачать приказ</a></div>
+							        <div class="internet"><strong>Интернет:<br></strong><%=item.internet%></div>
+							      </div>
+							    </div>
+						 	</div>
+						 	<%
+						}
+					}
+				  %>
+
+				</div>
+			</div>
+			<div class="new-promoutions">
+				<p class="title alert alert-info">Новые акции <span class="pull-right badge"><%=ArrayCount(newPromo);%></span> </p>
+				<div class="panel-group" id="accordion">
+				<% data += '&neww=';
+					for(item in newPromo)
+					{
+						descr = OpenDoc(UrlFromDocID(Int(item.id))).TopElem;
+						data += item.title + "|" +  item.date_from + "|" +  item.date_to + "|" + HtmlToPlainText(descr.description) + "---";
+						%>
+						<div class="panel panel-default">
+						    <div class="panel-heading">
+						      <h5 class="panel-title">
+						        <a data-toggle="collapse" data-parent="#accordion" href="#new_<%=item.id%>">
+						          <%=item.title%>
+						        </a>
+						      </h5>
+						    </div>
+						    <div id="new_<%=item.id%>" class="panel-collapse collapse">
+						      <div class="panel-body promoInfo" id="promoInfo">
+						        <div class="description"><strong>Описание:<br></strong><%=HtmlToPlainText(descr.description)%></div>
+							        <div class="date"><strong>Срок действия<br></strong>Действует с: <%=item.date_from%> <br>
+							        По: <% if(item.date_to == Date('01.01.2999')) {%>До особого распоряжения<%} else {%> <%=item.date_to %><%} %></div>
+							        <div class="file"><strong>Приказ:<br></strong><a href="<%="download_file.html?file_id=" + item.file%>">Скачать приказ</a></div>
+							        <div class="internet"><strong>Интернет:<br></strong><%=item.internet%></div>
+						      </div>
+						    </div>
+					 	</div>
+					 	<%
+					}
+				  %>
+				</div>
+			</div>
+			<div class="active-promoutions">
+				<p class="title alert alert-info">Актуальные акции <span class="pull-right badge"><%=sumActualPromo%></span> </p>
+				<div class="panel panel-default margin-for-panel">
+					<div class="panel-heading">
+				      	<div class="panel-title">
+					        <a data-toggle="collapse" data-parent="#accordion" href="#national">
+					          <h4>Национальные акции <span class="pull-right badge"><%=ArrayCount(national);%></span></h4>
+					        </a>
+				      	</div>
+					</div>
+					<div id="national" class="panel-collapse collapse">
+						<div class="panel-group" id="accordion">
+						<% 
+							data += '&national=';
+							if(ArrayCount(national)!=0)
+							{
+								
+								for(item in national)
+								{
+									descr = OpenDoc(UrlFromDocID(Int(item.id))).TopElem;
+									data += item.title + "|" +  item.date_from + "|" +  item.date_to + "|" + HtmlToPlainText(descr.description) + "---";
+									%>
+									<div class="panel panel-warning">
+									    <div class="panel-heading">
+									      <h5 class="panel-title">
+									        <a data-toggle="collapse" data-parent="#accordion" href="#<%=item.id%>">
+									          <%=item.title%>
+									        </a>
+									      </h5>
+									    </div>
+									    <div id="<%=item.id%>" class="panel-collapse collapse">
+									      <div class="panel-body promoInfo" id="promoInfo">
+									        <div class="description"><strong>Описание:<br></strong><%=HtmlToPlainText(descr.description)%></div>
+										        <div class="date"><strong>Срок действия<br></strong>Действует с: <%=item.date_from%> <br>
+										        По: <% if(item.date_to == Date('01.01.2999')) {%>До особого распоряжения<%} else {%> <%=item.date_to %><%} %></div>
+										        <div class="file"><strong>Приказ:<br></strong><a href="<%="download_file.html?file_id=" + item.file%>">Скачать приказ</a></div>
+										        <div class="internet"><strong>Интернет:<br></strong><%=item.internet%></div>
+									        </div>
+									    </div>
+								 	</div>
+								 	<%
+								}
+							}
+							else
+							{
+								%>
+									<div class="no-actions">Нет акций в этой категории</div>
+								<%
+							}
+						  %>
+						</div>
+					</div>
+				</div>
+				<div class="panel panel-default margin-for-panel">
+					<div class="panel-heading">
+				      	<h5 class="panel-title">
+					        <a data-toggle="collapse" data-parent="#accordion" href="#ce">
+					          <h4>Отдел CE <span class="pull-right badge"><%=ArrayCount(ce);%></span></h4>
+					        </a>
+				      	</h5>
+					</div>
+					<div id="ce" class="panel-collapse collapse">
+						<div class="panel-group" id="accordion">
+						<% 
+							data += '&ce=';
+							if(ArrayCount(ce)!=0)
+							{
+								
+								for(item in ce)
+								{
+									descr = OpenDoc(UrlFromDocID(Int(item.id))).TopElem;
+									data += item.title + "|" +  item.date_from + "|" +  item.date_to + "|" + HtmlToPlainText(descr.description) + "---";
+									%>
+									<div class="panel panel-warning">
+									    <div class="panel-heading">
+									      <h5 class="panel-title">
+									        <a data-toggle="collapse" data-parent="#accordion" href="#<%=item.id%>">
+									          <%=item.title%>
+									        </a>
+									      </h5>
+									    </div>
+									    <div id="<%=item.id%>" class="panel-collapse collapse">
+									      <div class="panel-body promoInfo" id="promoInfo">
+									        <div class="description"><strong>Описание:<br></strong><%=HtmlToPlainText(descr.description)%></div>
+							        <div class="date"><strong>Срок действия<br></strong>Действует с: <%=item.date_from%> <br>
+							        По: <% if(item.date_to == Date('01.01.2999')) {%>До особого распоряжения<%} else {%> <%=item.date_to %><%} %></div>
+							        <div class="file"><strong>Приказ:<br></strong><a href="<%="download_file.html?file_id=" + item.file%>">Скачать приказ</a></div>
+							        <div class="internet"><strong>Интернет:<br></strong><%=item.internet%></div>
+									      </div>
+									    </div>
+								 	</div>
+								 	<%
+								}
+							}
+							else
+							{
+								%>
+									<div class="no-actions">Нет акций в этой категории</div>
+								<%
+							}
+						  %>
+						</div>
+					</div>
+				</div>
+				<div class="panel panel-default margin-for-panel">
+					<div class="panel-heading">
+				      	<h5 class="panel-title">
+					        <a data-toggle="collapse" data-parent="#accordion" href="#pe">
+					          <h4>Отдел PE <span class="pull-right badge"><%=ArrayCount(pe);%></span></h4>
+					        </a>
+				      	</h5>
+					</div>
+					<div id="pe" class="panel-collapse collapse">
+						<div class="panel-group" id="accordion">
+						<% 
+							data += '&pe=';
+							if(ArrayCount(pe)!=0)
+							{
+								
+								for(item in pe)
+								{
+									descr = OpenDoc(UrlFromDocID(Int(item.id))).TopElem;
+									data += item.title + "|" +  item.date_from + "|" +  item.date_to + "|" + HtmlToPlainText(descr.description) + "---";
+									%>
+									<div class="panel panel-warning">
+									    <div class="panel-heading">
+									      <h5 class="panel-title">
+									        <a data-toggle="collapse" data-parent="#accordion" href="#<%=item.id%>">
+									          <%=item.title%>
+									        </a>
+									      </h5>
+									    </div>
+									    <div id="<%=item.id%>" class="panel-collapse collapse">
+									      <div class="panel-body promoInfo" id="promoInfo">
+									        <div class="description"><strong>Описание:<br></strong><%=HtmlToPlainText(descr.description)%></div>
+							        <div class="date"><strong>Срок действия<br></strong>Действует с: <%=item.date_from%> <br>
+							        По: <% if(item.date_to == Date('01.01.2999')) {%>До особого распоряжения<%} else {%> <%=item.date_to %><%} %></div>
+							        <div class="file"><strong>Приказ:<br></strong><a href="<%="download_file.html?file_id=" + item.file%>">Скачать приказ</a></div>
+							        <div class="internet"><strong>Интернет:<br></strong><%=item.internet%></div>
+									      </div>
+									    </div>
+								 	</div>
+								 	<%
+								}
+							}
+							else
+							{
+								%>
+									<div class="no-actions">Нет акций в этой категории</div>
+								<%
+							}
+						  %>
+						</div>
+					</div>
+				</div>
+				<div class="panel panel-default margin-for-panel">
+					<div class="panel-heading">
+				      	<h5 class="panel-title">
+					        <a data-toggle="collapse" data-parent="#accordion" href="#sda">
+					          <h4>Отдел SDA <span class="pull-right badge"><%=ArrayCount(sda);%></span></h4>
+					        </a>
+				      	</h5>
+					</div>
+					<div id="sda" class="panel-collapse collapse">
+						<div class="panel-group" id="accordion">
+						<% 
+							data += '&sda=';
+							if(ArrayCount(sda)!=0)
+							{
+								
+								for(item in sda)
+								{
+									descr = OpenDoc(UrlFromDocID(Int(item.id))).TopElem;
+									data += item.title + "|" +  item.date_from + "|" +  item.date_to + "|" + HtmlToPlainText(descr.description) + "---";
+									%>
+									<div class="panel panel-warning">
+									    <div class="panel-heading">
+									      <h5 class="panel-title">
+									        <a data-toggle="collapse" data-parent="#accordion" href="#<%=item.id%>">
+									          <%=item.title%>
+									        </a>
+									      </h5>
+									    </div>
+									    <div id="<%=item.id%>" class="panel-collapse collapse">
+									      <div class="panel-body promoInfo" id="promoInfo">
+									        <div class="description"><strong>Описание:<br></strong><%=HtmlToPlainText(descr.description)%></div>
+							        <div class="date"><strong>Срок действия<br></strong>Действует с: <%=item.date_from%> <br>
+							        По: <% if(item.date_to == Date('01.01.2999')) {%>До особого распоряжения<%} else {%> <%=item.date_to %><%} %></div>
+							        <div class="file"><strong>Приказ:<br></strong><a href="<%="download_file.html?file_id=" + item.file%>">Скачать приказ</a></div>
+							        <div class="internet"><strong>Интернет:<br></strong><%=item.internet%></div>
+									      </div>
+									    </div>
+								 	</div>
+								 	<%
+								}
+							}
+							else
+							{
+								%>
+									<div class="no-actions">Нет акций в этой категории</div>
+								<%
+							}
+						  %>
+						</div>
+					</div>
+				</div>
+				<div class="panel panel-default margin-for-panel">
+					<div class="panel-heading">
+				      	<h5 class="panel-title">
+					        <a data-toggle="collapse" data-parent="#accordion" href="#mda">
+					          <h4>Отдел MDA <span class="pull-right badge"><%=ArrayCount(mda);%></span></h4>
+					        </a>
+				      	</h5>
+					</div>
+					<div id="mda" class="panel-collapse collapse">
+						<div class="panel-group" id="accordion">
+						<% 
+							data += '&mda=';
+							if(ArrayCount(mda)!=0)
+							{
+								
+								for(item in mda)
+								{
+									descr = OpenDoc(UrlFromDocID(Int(item.id))).TopElem;
+									data += item.title + "|" +  item.date_from + "|" +  item.date_to + "|" + HtmlToPlainText(descr.description) + "---";
+									%>
+									<div class="panel panel-warning">
+									    <div class="panel-heading">
+									      <h5 class="panel-title">
+									        <a data-toggle="collapse" data-parent="#accordion" href="#<%=item.id%>">
+									          <%=item.title%>
+									        </a>
+									      </h5>
+									    </div>
+									    <div id="<%=item.id%>" class="panel-collapse collapse">
+									      <div class="panel-body promoInfo" id="promoInfo">
+									        <div class="description"><strong>Описание:<br></strong><%=HtmlToPlainText(descr.description)%></div>
+							        <div class="date"><strong>Срок действия<br></strong>Действует с: <%=item.date_from%> <br>
+							        По: <% if(item.date_to == Date('01.01.2999')) {%>До особого распоряжения<%} else {%> <%=item.date_to %><%} %></div>
+							        <div class="file"><strong>Приказ:<br></strong><a href="<%="download_file.html?file_id=" + item.file%>">Скачать приказ</a></div>
+							        <div class="internet"><strong>Интернет:<br></strong><%=item.internet%></div>
+									      </div>
+									    </div>
+								 	</div>
+								 	<%
+								}
+							}
+							else
+							{
+								%>
+									<div class="no-actions">Нет акций в этой категории</div>
+								<%
+							}
+						  %>
+						</div>
+					</div>
+				</div>
+				<div class="panel panel-default margin-for-panel">
+					<div class="panel-heading">
+				      	<h5 class="panel-title">
+					        <a data-toggle="collapse" data-parent="#accordion" href="#acc">
+					          <h4>Отдел ACC <span class="pull-right badge"><%=ArrayCount(acc);%></span></h4>
+					        </a>
+				      	</h5>
+					</div>
+					<div id="acc" class="panel-collapse collapse">
+						<div class="panel-group" id="accordion">
+						<% 
+							data += '&acc=';
+							if(ArrayCount(acc)!=0)
+							{
+								
+								for(item in acc)
+								{
+									descr = OpenDoc(UrlFromDocID(Int(item.id))).TopElem;
+									data += item.title + "|" +  item.date_from + "|" +  item.date_to + "|" + HtmlToPlainText(descr.description) + "---";
+									%>
+									<div class="panel panel-warning">
+									    <div class="panel-heading">
+									      <h5 class="panel-title">
+									        <a data-toggle="collapse" data-parent="#accordion" href="#<%=item.id%>">
+									          <%=item.title%>
+									        </a>
+									      </h5>
+									    </div>
+									    <div id="<%=item.id%>" class="panel-collapse collapse">
+									      <div class="panel-body promoInfo" id="promoInfo">
+									        <div class="description"><strong>Описание:<br></strong><%=HtmlToPlainText(descr.description)%></div>
+							        <div class="date"><strong>Срок действия<br></strong>Действует с: <%=item.date_from%> <br>
+							        По: <% if(item.date_to == Date('01.01.2999')) {%>До особого распоряжения<%} else {%> <%=item.date_to %><%} %></div>
+							        <div class="file"><strong>Приказ:<br></strong><a href="<%="download_file.html?file_id=" + item.file%>">Скачать приказ</a></div>
+							        <div class="internet"><strong>Интернет:<br></strong><%=item.internet%></div>
+									      </div>
+									    </div>
+								 	</div>
+								 	<%
+								}
+							}
+							else
+							{
+								%>
+									<div class="no-actions">Нет акций в этой категории</div>
+								<%
+							}
+						  %>
+						</div>
+					</div>
+				</div>
+				<div class="panel panel-default margin-for-panel">
+					<div class="panel-heading">
+				      	<h5 class="panel-title">
+					        <a data-toggle="collapse" data-parent="#accordion" href="#ht">
+					          <h4>Отдел HiTechnic <span class="pull-right badge"><%=ArrayCount(ht);%></span></h4>
+					        </a>
+				      	</h5>
+					</div>
+					<div id="ht" class="panel-collapse collapse">
+						<div class="panel-group" id="accordion">
+						<% 
+							data += '&ht=';
+							if(ArrayCount(ht)!=0)
+							{
+								data += item.title + "|" +  item.date_from + "|" +  item.date_to + "|" + HtmlToPlainText(descr.description) + "---";
+								for(item in ht)
+								{
+									descr = OpenDoc(UrlFromDocID(Int(item.id))).TopElem;
+									%>
+									<div class="panel panel-warning">
+									    <div class="panel-heading">
+									      <h5 class="panel-title">
+									        <a data-toggle="collapse" data-parent="#accordion" href="#<%=item.id%>">
+									          <%=item.title%>
+									        </a>
+									      </h5>
+									    </div>
+									    <div id="<%=item.id%>" class="panel-collapse collapse">
+									      <div class="panel-body promoInfo" id="promoInfo">
+									        <div class="description"><strong>Описание:<br></strong><%=HtmlToPlainText(descr.description)%></div>
+							        <div class="date"><strong>Срок действия<br></strong>Действует с: <%=item.date_from%> <br>
+							        По: <% if(item.date_to == Date('01.01.2999')) {%>До особого распоряжения<%} else {%> <%=item.date_to %><%} %></div>
+							        <div class="file"><strong>Приказ:<br></strong><a href="<%="download_file.html?file_id=" + item.file%>">Скачать приказ</a></div>
+							        <div class="internet"><strong>Интернет:<br></strong><%=item.internet%></div>
+									      </div>
+									    </div>
+								 	</div>
+								 	<%
+								}
+							}
+							else
+							{
+								%>
+									<div class="no-actions">Нет акций в этой категории</div>
+								<%
+							}
+						  %>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="regulations">
+				<p class="title alert alert-info regulations-panel">Регламенты <span class="pull-right badge"><%=sumRegs;%></span> </p>
+				<div class="panel panel-default margin-for-panel">
+					<div class="panel-heading">
+				      	<div class="panel-title">
+					        <a data-toggle="collapse" data-parent="#accordion" href="#global">
+					          <h4>Общие регламенты <span class="pull-right badge"><%=ArrayCount(totalReg);%></span></h4>
+					        </a>
+				      	</div>
+
+					</div>
+					<div id="global" class="panel-collapse collapse">
+						<div class="panel-group" id="accordion">
+						<% 
+							if(ArrayCount(totalReg)!=0)
+							{
+								for(item in totalReg)
+								{
+									descr = OpenDoc(UrlFromDocID(Int(item.id))).TopElem;
+									%>
+									<div class="panel panel-warning">
+									    <div class="panel-heading">
+									      <h5 class="panel-title">
+									        <a data-toggle="collapse" data-parent="#accordion" href="#<%=item.id%>">
+									          <%=item.title%>
+									        </a>
+									      </h5>
+									    </div>
+									    <div id="<%=item.id%>" class="panel-collapse collapse">
+									      <div class="panel-body promoInfo" id="promoInfo">
+									        <div class="description"><strong>Описание:<br></strong><%=HtmlToPlainText(descr.description)%></div>
+							        <div class="date"><strong>Срок действия<br></strong>Действует с: <%=item.date_from%> <br>
+							        По: <% if(item.date_to == Date('01.01.2999')) {%>До особого распоряжения<%} else {%> <%=item.date_to %><%} %></div>
+							        <div class="file"><strong>Приказ:<br></strong><a href="<%="download_file.html?file_id=" + item.file%>">Скачать приказ</a></div>
+							        <div class="internet"><strong>Интернет:<br></strong><%=item.internet%></div>
+									      </div>
+									    </div>
+								 	</div>
+								 	<%
+								}
+							}
+							else
+							{
+								%>
+									<div class="no-actions">Нет регламентов в этой категории</div>
+								<%
+							}
+						  %>
+						</div>
+					</div>
+				</div>
+				<div class="panel panel-default margin-for-panel">
+					<div class="panel-heading">
+				      	<div class="panel-title">
+					        <a data-toggle="collapse" data-parent="#accordion" href="#service">
+					          <h4>Регламенты по услугам <span class="pull-right badge"><%=ArrayCount(serviceReg);%></span></h4>
+					        </a>
+				      	</div>
+
+					</div>
+					<div id="service" class="panel-collapse collapse">
+						<div class="panel-group" id="accordion">
+						<% 
+							if(ArrayCount(serviceReg)!=0)
+							{
+								for(item in serviceReg)
+								{
+									descr = OpenDoc(UrlFromDocID(Int(item.id))).TopElem;
+									%>
+									<div class="panel panel-warning">
+									    <div class="panel-heading">
+									      <h5 class="panel-title">
+									        <a data-toggle="collapse" data-parent="#accordion" href="#<%=item.id%>">
+									          <%=item.title%>
+									        </a>
+									      </h5>
+									    </div>
+									    <div id="<%=item.id%>" class="panel-collapse collapse">
+									      <div class="panel-body promoInfo" id="promoInfo">
+									        <div class="description"><strong>Описание:<br></strong><%=HtmlToPlainText(descr.description)%></div>
+							        <div class="date"><strong>Срок действия<br></strong>Действует с: <%=item.date_from%> <br>
+							        По: <% if(item.date_to == Date('01.01.2999')) {%>До особого распоряжения<%} else {%> <%=item.date_to %><%} %></div>
+							        <div class="file"><strong>Приказ:<br></strong><a href="<%="download_file.html?file_id=" + item.file%>">Скачать приказ</a></div>
+							        <div class="internet"><strong>Интернет:<br></strong><%=item.internet%></div>
+									      </div>
+									    </div>
+								 	</div>
+								 	<%
+								}
+							}
+							else
+							{
+								%>
+									<div class="no-actions">Нет регламентов в этой категории</div>
+								<%
+							}
+						  %>
+						</div>
+					</div>
+				</div>
+				<div class="panel panel-default margin-for-panel">
+					<div class="panel-heading">
+				      	<div class="panel-title">
+					        <a data-toggle="collapse" data-parent="#accordion" href="#repair">
+					          <h4>Регламенты по сервису <span class="pull-right badge"><%=ArrayCount(repairReg);%></span></h4>
+					        </a>
+				      	</div>
+
+					</div>
+					<div id="repair" class="panel-collapse collapse">
+						<div class="panel-group" id="accordion">
+						<% 
+							if(ArrayCount(repairReg)!=0)
+							{
+								for(item in repairReg)
+								{
+									descr = OpenDoc(UrlFromDocID(Int(item.id))).TopElem;
+									%>
+									<div class="panel panel-warning">
+									    <div class="panel-heading">
+									      <h5 class="panel-title">
+									        <a data-toggle="collapse" data-parent="#accordion" href="#<%=item.id%>">
+									          <%=item.title%>
+									        </a>
+									      </h5>
+									    </div>
+									    <div id="<%=item.id%>" class="panel-collapse collapse">
+									      <div class="panel-body promoInfo" id="promoInfo">
+									        <div class="description"><strong>Описание:<br></strong><%=HtmlToPlainText(descr.description)%></div>
+							        <div class="date"><strong>Срок действия<br></strong>Действует с: <%=item.date_from%> <br>
+							        По: <% if(item.date_to == Date('01.01.2999')) {%>До особого распоряжения<%} else {%> <%=item.date_to %><%} %></div>
+							        <div class="file"><strong>Приказ:<br></strong><a href="<%="download_file.html?file_id=" + item.file%>">Скачать приказ</a></div>
+							        <div class="internet"><strong>Интернет:<br></strong><%=item.internet%></div>
+									      </div>
+									    </div>
+								 	</div>
+								 	<%
+								}
+							}
+							else
+							{
+								%>
+									<div class="no-actions">Нет регламентов в этой категории</div>
+								<%
+							}
+						  %>
+						</div>
+					</div>
+				</div>	
+				<div class="panel panel-default margin-for-panel">
+					<div class="panel-heading">
+				      	<div class="panel-title">
+					        <a data-toggle="collapse" data-parent="#accordion" href="#cards">
+					          <h4>Регламенты по картам <span class="pull-right badge"><%=ArrayCount(cardsReg);%></span></h4>
+					        </a>
+				      	</div>
+
+					</div>
+					<div id="cards" class="panel-collapse collapse">
+						<div class="panel-group" id="accordion">
+						<% 
+							if(ArrayCount(cardsReg)!=0)
+							{
+								for(item in cardsReg)
+								{
+									descr = OpenDoc(UrlFromDocID(Int(item.id))).TopElem;
+									%>
+									<div class="panel panel-warning">
+									    <div class="panel-heading">
+									      <h5 class="panel-title">
+									        <a data-toggle="collapse" data-parent="#accordion" href="#<%=item.id%>">
+									          <%=item.title%>
+									        </a>
+									      </h5>
+									    </div>
+									    <div id="<%=item.id%>" class="panel-collapse collapse">
+									      <div class="panel-body promoInfo" id="promoInfo">
+									        <div class="description"><strong>Описание:<br></strong><%=HtmlToPlainText(descr.description)%></div>
+							        <div class="date"><strong>Срок действия<br></strong>Действует с: <%=item.date_from%> <br>
+							        По: <% if(item.date_to == Date('01.01.2999')) {%>До особого распоряжения<%} else {%> <%=item.date_to %><%} %></div>
+							        <div class="file"><strong>Приказ:<br></strong><a href="<%="download_file.html?file_id=" + item.file%>">Скачать приказ</a></div>
+							        <div class="internet"><strong>Интернет:<br></strong><%=item.internet%></div>
+									      </div>
+									    </div>
+								 	</div>
+								 	<%
+								}
+							}
+							else
+							{
+								%>
+									<div class="no-actions">Нет регламентов в этйо категории</div>
+								<%
+							}
+						  %>
+						</div>
+					</div>
+				</div>
+				<div class="panel panel-default margin-for-panel">
+					<div class="panel-heading">
+				      	<div class="panel-title">
+					        <a data-toggle="collapse" data-parent="#accordion" href="#shops">
+					          <h4>Регламенты по работе с магазинами <span class="pull-right badge"><%=ArrayCount(shopsReg);%></span></h4>
+					        </a>
+				      	</div>
+
+					</div>
+					<div id="shops" class="panel-collapse collapse">
+						<div class="panel-group" id="accordion">
+						<% 
+							if(ArrayCount(shopsReg)!=0)
+							{
+								for(item in shopsReg)
+								{
+									descr = OpenDoc(UrlFromDocID(Int(item.id))).TopElem;
+									%>
+									<div class="panel panel-warning">
+									    <div class="panel-heading">
+									      <h5 class="panel-title">
+									        <a data-toggle="collapse" data-parent="#accordion" href="#<%=item.id%>">
+									          <%=item.title%>
+									        </a>
+									      </h5>
+									    </div>
+									    <div id="<%=item.id%>" class="panel-collapse collapse">
+									      <div class="panel-body promoInfo" id="promoInfo">
+									        <div class="description"><strong>Описание:<br></strong><%=HtmlToPlainText(descr.description)%></div>
+							        <div class="date"><strong>Срок действия<br></strong>Действует с: <%=item.date_from%> <br>
+							        По: <% if(item.date_to == Date('01.01.2999')) {%>До особого распоряжения<%} else {%> <%=item.date_to %><%} %></div>
+							        <div class="file"><strong>Приказ:<br></strong><a href="<%="download_file.html?file_id=" + item.file%>">Скачать приказ</a></div>
+							        <div class="internet"><strong>Интернет:<br></strong><%=item.internet%></div>
+									      </div>
+									    </div>
+								 	</div>
+								 	<%
+								}
+							}
+							else
+							{
+								%>
+									<div class="no-actions">Нет рагламентов в этой категории</div>
+								<%
+							}
+						  %>
+						</div>
+					</div>
+				</div>															
+			</div>
+		</div>
+	</div>
+</div>
+<script type="text/javascript">
+    window.onload = function() {
+    	$('.ended').text(<%=count;%>);
+    };
+
+function exportToExcel(){
+		open_in_excel_get('<%=data;%>');
+	}
+</script>

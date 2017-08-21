@@ -1,0 +1,193 @@
+<style>
+	@font-face {font-family: FiraSans;src: url(../../../create/fonts/fira-sans/FiraSans-Light.otf);}	
+	#main_wrapp * {font-family: FiraSans, Verdana, Arial;margin: 0;padding: 0;border: none;color: #555;position: relative;} 
+	#warning {width: 40%;height: 100px;margin: 25px auto;background: #ddd;border-radius: 15px;box-shadow: 0 0 15px rgba(0,0,0,.5), inset 0 1px 1px rgba(255,255,255,.8), 0 10px 15px rgba(0,0,0,.3);}
+	#warning p {text-align: center;line-height: 100px;font-size: 1.2em;}
+	#main_body {width: 100%;max-height: 500px;overflow-y: auto;margin: 0 0 15px 0;}
+	#fixed p {text-align: center;font-size: 1.3em;font-weight: bold;margin: 8px;}
+	#main_table {width: 100%;text-align: center;cursor: default;}
+	#fixed_table {width: 100%;text-align: center;cursor: default;}
+	#head_string {background: #333;}
+	#head_string td {height: 30px; line-height: 30px;background: #777;color: #fff; padding: 5px; font-weight: bold;}
+	#head_string td:first-child {border-top-left-radius: 10px;border-bottom-left-radius: 10px; width: 28%;}
+	#head_string td:last-child {border-top-right-radius: 10px;border-bottom-right-radius: 10px;}
+	#body_string td {height: 25px; line-height: 25px;background: #fff; border-top: 1px solid #fff; border-bottom: 1px solid #fff; opacity: .7;}
+	#body_string td:first-child, .pos {width: 28%; border: 0px solid #fff !important;}
+	.fullname {font-weight: bold;border-top-left-radius: 10px;border-bottom-left-radius: 10px;}
+	.not_participated {background: url(my_template/create/img/Horizontal_Line-26.png) no-repeat center !important;}
+	.passed {background: url(my_template/create/img/Checkmark-24.png) no-repeat center !important;}
+	#description {position: absolute;top: 0;left: 0;display: none;background: #eee;border: 1px solid #555;border-radius: 8px;padding: 3px; cursor: default;}
+	.pos {width: 12% !important;}
+
+</style>
+<script>
+function open_in_excel_get(data_string){
+			data_string = $('#fixed_table').html();
+			$.ajax({
+				type:"POST",
+				url: "custom_web_template.html?object_id=6449294203009509668",
+				data: 'learning_data=' + data_string,
+				error: function(err) { alert("error ajax: "+err); },
+				success: function(resp)
+				{
+					location.href = 'assessment_excel_export.html';
+				}
+			});
+		}
+</script>
+
+<div id="main_wrapp">
+<%
+if ( curUser.position_name == 'Тренинг–менеджер' || curUser.position_name =='Администратор' || curUser.position_name =='Руководитель УЦ' || curUser.position_name =='Разработчик электронных курсов') {
+%>
+	<div id="fixed">
+		<p>Активности сотрудников</p>
+		<table id="fixed_table">
+				<tr id="head_string">
+				<td>ФИО</td>
+				<td class="pos">Должность</td>
+				<td class="pos">Магазин</td>
+				<td class="pos">Дата приема</td>
+				<td>Тренинг ПНП</td>
+				<td>Тренинг ОКС</td>
+				<td>Тренинг FIVES</td>
+				<td>Тренинг АЗ</td>
+				<td>Тренинг Аксессуары</td>
+				<td>Школа Супервайзера</td>
+
+			</tr>
+<!--
+		</table>	
+	</div>
+	<div id="main_body">
+		<table id="main_table">
+-->
+			<%
+
+			all_emploe_for_cur_head = XQuery("for $elem in collaborators where $elem/org_id='5546589151215959133' and $elem/is_dismiss!=true() and MatchSome( $elem/position_name, ( 'Продавец', 'Продавец-стажер', 'Продавец 1 кат', 'Продавец 2 кат', 'Продавец 3 кат', 'Продавец-звезда', 'Технический специалист ПК' )) order by $elem/position_parent_name, $elem/fullname return $elem");	
+
+			//all_emploe_for_cur_head = XQuery("for $elem in collaborators where $elem/position_parent_name='c001' and $elem/is_dismiss!=true()  and MatchSome( $elem/position_name, ( 'Продавец', 'Продавец-стажер', 'Продавец 1 кат', 'Продавец 2 кат', 'Продавец 3 кат', 'Продавец-звезда', 'Технический специалист ПК', 'Директор', 'Супервайзер' )) order by $elem/position_parent_name, $elem/fullname return $elem");	
+
+			
+
+			_traenings = [
+						'Тренинг ПНП',
+						'Тренинг Основы Качественного Сервиса',
+						'Тренинг АЗ',
+						'Тренинг Fives',
+						'Тренинг Аксессуары',
+						'Школа Супервайзера',
+						];
+
+			for ( i in all_emploe_for_cur_head ) {
+				if ( i.is_dismiss != true ) {
+
+					have_attended_trainingspnp = { 
+												pnp: false,
+												oks: false, 
+												az: false, 
+												fives: false,
+												acses: false,
+												ssuper: false
+												};
+					for (x = 0; x < _traenings.length; x++) {
+						saler = XQuery("for $elem in event_results where event_name='"+_traenings[x]+"' and person_id="+i.id+" and ForeignElem($elem/event_id)/status_id !='cancel' return $elem");	
+						
+						if(ArrayCount(saler) > 0) {
+							for (n in saler) {
+								if (n.event_name == _traenings[0] && n.is_confirm == true) { 
+									have_attended_trainingspnp.pnp = true;
+								}
+								if (n.event_name == _traenings[1] && n.is_confirm == true) { 
+									have_attended_trainingspnp.oks = true;
+								}
+
+								if (n.event_name == _traenings[2] && n.is_confirm == true) {  
+									have_attended_trainingspnp.az = true;
+								}
+
+								if (n.event_name == _traenings[3] && n.is_confirm == true) { 
+									have_attended_trainingspnp.fives = true;
+								}
+
+								if (n.event_name == _traenings[4] && n.is_confirm == true) { 
+									have_attended_trainingspnp.acses = true;
+								}
+
+								if (n.event_name == _traenings[5] && n.is_confirm == true) { 
+									have_attended_trainingspnp.ssuper = true;
+								}
+
+							}
+						}
+					}
+				%>
+				<tr id="body_string">
+					<td class="fullname"><%=i.fullname%></td>
+					<td class="pos"><%=i.position_name%></td>
+					<td class="pos"><%=i.position_parent_name%></td>
+					<td class="pos"><%=i.hire_date%></td>
+					<td><%=have_attended_trainingspnp.pnp == true? '&#8730;': '&#8722;'%></td>
+					<td><%=have_attended_trainingspnp.oks == true? '&#8730;': '&#8722;'%></td>
+					<td><%=have_attended_trainingspnp.fives == true? '&#8730;': '&#8722;'%></td>
+					<td><%=have_attended_trainingspnp.az == true? '&#8730;': '&#8722;'%></td>
+					<td><%=have_attended_trainingspnp.acses == true? '&#8730;': '&#8722;'%></td>
+					<td><%=have_attended_trainingspnp.ssuper == true? '&#8730;': '&#8722;'%></td>
+				</tr>
+				<%
+				}	
+			}
+			%>
+		</table>
+	<input type="button" value="Экспорт в Excel" onclick="exportToExcel()">
+	</div>
+<%	
+}
+else {
+%>
+	<div id="warning">
+		<p>Только Администратор может просмотреть эту страницу!</p>
+	</div>
+<%	
+}
+%>
+	<div id="description">
+		<p>Не участвовал/Принимал участие</p>		
+	</div>
+</div>
+<script>
+	if ( $('#main_table').height() > 500 ) {
+		$('#fixed_table').css({'width':'98.5%'});
+	}
+
+	$('#main_table td').hover(function() {
+		$(this).parent().children('td').css({
+											'border-top':'1px dashed #777',
+											'border-bottom':'1px dashed #777',
+											'opacity':'1'
+											});
+	}, function() {
+		$(this).parent().children('td').css({
+											'border-top':'1px dashed #fff',
+											'border-bottom':'1px dashed #fff',
+											'opacity':''
+											});
+	});
+
+	$('#fixed_table td').hover(function(e) {
+		if ( $(this).attr('class') != 'fullname' && $(this).attr('class') != 'pos' ) {
+		
+			var relativeX 	= e.pageX + 10;
+			var relativeY 	= e.pageY + 10;
+
+			$('#description p').empty().text( $(this).attr('class') == 'not_participated'? 'Не участвовал': 'Принимал участие' );
+			$('#description').stop(true,true).fadeIn().css({'top': relativeY + 'px', 'left': relativeX + 'px'});
+			
+		}
+	},function() {
+		$('#description').stop(true,true).fadeOut();
+	});
+function exportToExcel(){
+			open_in_excel_get($('#fixed_table').html());
+		}
+</script>

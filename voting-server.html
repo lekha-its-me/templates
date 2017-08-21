@@ -1,0 +1,50 @@
+<%
+if(Request.Form.HasProperty('object'))
+{
+	try{
+		var user = Request.Form.user;
+		var object = Int(Request.Form.object);
+		var vote = 1;
+
+		var doc = OpenNewDoc('x-local://udt/udt_cc_voting.xmd');
+		doc.TopElem.user_id = user;
+		doc.TopElem.object_id = object;
+		doc.TopElem.vote = vote;
+
+		doc.BindToDb();
+		doc.Save();
+
+		var votes = ArrayCount(XQuery("for $elem in cc_votings where $elem/object_id="+object+" return $elem"));
+		Response.Write(votes);
+}
+catch(e)
+	{
+		Response.Write("Не удалось проголосовать");
+	}
+}
+else
+{
+	try{
+	var user = Request.Form.user;
+	var title = Request.Form.title;
+	var category = Request.Form.category;
+	var description = Request.Form.description;
+
+	var doc = OpenNewDoc('x-local://udt/udt_cc_proposition.xmd');
+	doc.TopElem.user_id = user;
+	doc.TopElem.title = title;
+	doc.TopElem.category = category;
+	doc.TopElem.proposition_body = HtmlToPlainText(description);
+
+	doc.BindToDb();
+	doc.Save();
+
+	Request.Redirect('/view_doc.html?mode=doc_type&custom_web_template_id=6402499480447441467&doc_id=6402500382980705154');
+}
+catch(e)
+	{
+		Response.Write("Ошибка сохранения");
+	}
+}
+
+%>

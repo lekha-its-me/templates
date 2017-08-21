@@ -1,0 +1,290 @@
+<%
+var handler_url = 'custom_web_template.html?object_id=6402830309199839790';
+_curUserId = curUser.id;
+
+var my_votes = XQuery("for $elem in cc_votings where $elem/user_id="+_curUserId+" return $elem ");
+for(i in my_votes)
+{
+	%>
+	<script type="text/javascript">
+	$(document).ready(function(){
+		$('button').each(function(i,elem) {
+			if ($(this).attr("name") == <%=i.object_id%>) {
+				$(this).attr("disabled", "disabled");
+			}
+		});
+		});
+	</script>
+	<%
+}
+
+%>
+<style type="text/css">
+	.my-row {
+		display: inline-flex;
+		width: 100%;
+	}
+	.column-3 {
+		width: 30%;
+	}
+
+	.column-7 {
+		border-left: 2px solid #eee;
+		padding-left: 10px;
+		width: 70%;
+	}
+
+	.my-success-alert {
+		display: none;
+	}
+	.my-danger-alert {
+		display: none;
+	}
+
+	.photo {
+		max-height: 50px;
+		margin-left: 0;
+	}
+</style>
+<script type="text/javascript">
+	$(function () {
+	  $('[data-toggle="tooltip"]').tooltip()
+	});
+
+	function workWithModal(){
+		$(".my-success-alert").css("display","none");
+		$('#add').modal('hide');
+		location.reload(true);
+	}
+
+	function saveForm(){
+		if ($('#title').val() == '' || $('#description').val() == '') 
+		{
+			$(".my-danger-alert").css("display","block");
+			$(".my-danger-alert").text("Заполнены не все поля");
+			setTimeout('$(".my-danger-alert").css("display","none");',3000);
+			return;
+		}
+
+	$.ajax({
+		type:"POST",
+		url: '<%=handler_url;%>',
+		data: 'user=<%=_curUserId%>&category=' + $('#category').val() + '&title=' + $('#title').val() + '&description=' + $('#description').val(),
+		error: function( err ) { alert( "error ajax: " + err ) },
+		success: function(resp){
+			if(resp == "Ошибка сохранения")
+				{
+					$(".my-danger-alert").css("display","block");
+					$(".my-danger-alert").text("Ошибка сохранения");
+						setTimeout('$(".my-danger-alert").css("display","none")',3000);
+				}else{
+						$('#title').val('');
+						$('#category').val('');
+						$('#description').val('');
+						$(".my-success-alert").css("display","block");
+						$(".my-success-alert").text("Успешно сохранено");
+						setTimeout(workWithModal,3000);
+				}
+
+			}
+		});
+	}
+
+		$(document).ready(function(){
+		   $('button#vote_btn').on('click', function(){
+
+		   var obj = $(this).attr("name");
+		   $(this).attr("disabled", "disabled");
+		   $.ajax({
+				type:"POST",
+				url: '<%=handler_url;%>',
+				data: 'user=<%=_curUserId%>&object=' + obj,
+				error: function( err ) { alert( "error ajax: " + err ) },
+				success: function(resp){
+					$('.span-'+obj).text(parseInt($('.span-'+obj).text()) + 1);
+					}
+				});
+		   });
+		});
+</script>
+<%
+	var propositions = XQuery("for $elem in cc_propositions where $elem/category='proposition' return $elem");
+	var pretensions = XQuery("for $elem in cc_propositions where $elem/category='pretension' return $elem");
+
+%>
+<div class="container-fluid">
+	<div class="jumbotron">
+	  <h3>Hello, world!</h3>
+	  <p>ЗДесь вы можете написать предложение или оставить претензию</p>
+	  <p><button class="btn btn-primary btn-lg" href="#" role="button" data-toggle="modal" data-target="#add">Добавить</button></p>
+	</div>
+
+	<div>
+
+	  <!-- Nav tabs -->
+	  <ul class="nav nav-tabs nav-justified" role="tablist">
+	    <li role="presentation" class="active"><a href="#home" aria-controls="home" role="tab" data-toggle="tab">Предложения</a></li>
+	    <li role="presentation"><a href="#profile" aria-controls="profile" role="tab" data-toggle="tab">Претензии</a></li>
+	  </ul>
+
+	  <!-- Tab panes -->
+	  <div class="tab-content">
+	    <div role="tabpanel" class="tab-pane active" id="home">
+	    	<div class="container-fluid">
+				<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+				<%
+				var photo = '';
+				var votes = 0;
+				for(item in propositions)
+				{
+				votes = ArrayCount(XQuery("for $elem in cc_votings where $elem/object_id="+item.id+" return $elem"));
+				descr = OpenDoc(UrlFromDocID(Int(item.id))).TopElem;
+				collab = OpenDoc(UrlFromDocID(Int(item.user_id))).TopElem;
+				if(collab.pict_url.HasValue)
+				{
+				photo = collab.pict_url;
+				}
+				else if(collab.personal_config.avatar_filename.HasValue)
+				{
+					photo = '' + collab.personal_config.avatar_filename;
+				}
+				else
+				{
+					photo = 'pics/nophoto.png';
+				}
+				%>
+				  <div class="panel panel-default">
+				    <div class="panel-heading" role="tab" id="headingOne">
+				      <h4 class="panel-title">
+				      <span class="label label-info span-<%=item.id%>"><%=votes%></span>
+				        <a role="button" data-toggle="collapse" data-parent="#accordion" href="#<%=item.id%>" aria-expanded="true" aria-controls="<%=item.id%>">
+				          <%=descr.title%>
+				          <span class="label label-success pull-right"><%=item.status%></span>
+				        </a>
+				      </h4>
+				    </div>
+				    <div id="<%=item.id%>" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
+				      <div class="panel-body">
+				      	<div class="my-row">
+					      	<div class="column-3">
+					      		<div class="media">
+								  <div class="media-left">
+								      <img class="media-object img-thumbnail photo" src="<%=photo%>" alt="...">
+								  </div>
+								  <div class="media-body">
+								    <h4 class="media-heading"><%=descr.user_id.ForeignElem.fullname%></h4>
+	    				            <span><button type="button" class="btn btn-primary btn-sm" data-toggle="tooltip" data-placement="right" title="Поддержать" name="<%=item.id%>" id="vote_btn"><i class="glyphicon glyphicon-thumbs-up"></i></button></span>
+								  </div>
+								</div>
+					      	</div>
+					        <div class="column-7"><%=HtmlToPlainText(descr.proposition_body)%></div>
+				      	</div>
+				      </div>
+				    </div>
+				  </div>
+				<%
+				}
+				%>
+				</div>
+	    	</div>
+	    </div>
+	    <div role="tabpanel" class="tab-pane" id="profile">
+	    	<div class="container-fluid">
+				<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+				<%
+				photo = '';
+				votes = 0;
+				for(item in pretensions)
+				{
+				votes = ArrayCount(XQuery("for $elem in cc_votings where $elem/object_id="+item.id+" return $elem"));
+				descr = OpenDoc(UrlFromDocID(Int(item.id))).TopElem;
+				collab = OpenDoc(UrlFromDocID(Int(item.user_id))).TopElem;
+				if(collab.pict_url.HasValue)
+				{
+				photo = collab.pict_url;
+				}
+				else if(collab.personal_config.avatar_filename.HasValue)
+				{
+					photo = '' + collab.personal_config.avatar_filename;
+				}
+				else
+				{
+					photo = 'pics/nophoto.png';
+				}
+				%>
+				  <div class="panel panel-default">
+				    <div class="panel-heading" role="tab" id="headingOne">
+				      <h4 class="panel-title">
+				      <span class="label label-info span-<%=item.id%>"><%=votes%></span>
+				        <a role="button" data-toggle="collapse" data-parent="#accordion" href="#<%=item.id%>" aria-expanded="true" aria-controls="<%=item.id%>">
+				          <%=descr.title%>
+				          <span class="label label-success pull-right"><%=item.status%></span>
+				        </a>
+				      </h4>
+				    </div>
+				    <div id="<%=item.id%>" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
+				      <div class="panel-body">
+				      	<div class="my-row">
+					      	<div class="column-3">
+					      		<div class="media">
+								  <div class="media-left">
+								      <img class="media-object img-thumbnail photo" src="<%=photo%>" alt="...">
+								  </div>
+								  <div class="media-body">
+								    <h4 class="media-heading"><%=descr.user_id.ForeignElem.fullname%></h4>
+	    				            <span><button type="button" class="btn btn-primary btn-sm" data-toggle="tooltip" data-placement="right" title="Поддержать" name="<%=item.id%>" id="vote_btn"><i class="glyphicon glyphicon-thumbs-up"></i></button></span>
+								  </div>
+								</div>
+					      	</div>
+					        <div class="column-7"><%=HtmlToPlainText(descr.proposition_body)%></div>
+				      	</div>
+				      </div>
+				    </div>
+				  </div>
+				<%
+				}
+				%>
+				</div>
+	    	</div>
+	    </div>
+	  </div>
+
+	</div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="add" tabindex="-1" role="dialog" aria-labelledby="add">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">Новая запись</h4>
+      </div>
+      <div class="modal-body">
+      <div class="alert alert-success my-success-alert" role="alert"></div>
+      <div class="alert alert-danger my-danger-alert" role="alert"></div>
+        <form method="POST"">
+        	<div class="form-group">
+        		<label for="category">Категория</label>
+        		<select class="form-control" id="category">
+				  <option value="proposition">Предложение</option>
+				  <option value="pretension">Претензия</option>
+				</select>
+        	</div>
+        	<div class="form-group">
+        		<label for="title">Название</label>
+        		<input type="text" name="title" id="title" class="form-control" />
+        	</div>
+        	<div class="form-group">
+        		<label for="description">Описание</label>
+        		<textarea id="description" class="form-control" rows="7"></textarea>
+        	</div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Отмена</button>
+        <button type="button" class="btn btn-primary" onclick="saveForm()">Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
