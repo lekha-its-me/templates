@@ -1,0 +1,224 @@
+<%
+	var hr_1_shops = tools_web.get_web_param(curParams, 'hr_1_shops', '', true).split(',');
+	var hr_2_shops = tools_web.get_web_param(curParams, 'hr_2_shops', '', true).split(',');
+	var hr_1 = tools_web.get_web_param(curParams, 'hr_1', '', true);
+	var hr_2 = tools_web.get_web_param(curParams, 'hr_2', '', true);
+	var hrArr = [hr_1,hr_2];
+	var hrShopsArr = [hr_1_shops,hr_2_shops];
+
+	var collab_notif = tools_web.get_web_param(curParams, 'collab_notif', '', true);
+	var boss_notif = tools_web.get_web_param(curParams, 'boss_notif', '', true);
+	var hr_notif = tools_web.get_web_param(curParams, 'hr_notif', '', true);
+
+	// блок создани€ всех анкет
+	if(Request.Form.HasProperty('boss')&&Request.Form.HasProperty('user')){
+	try{
+			var bossId = StrReplace(Request.Form.boss, 'id_', '');
+			var userId = StrReplace(Request.Form.user, 'id_', '');
+			var date = Request.Form.date;
+			var hrId =  '';
+
+
+			////////////////////////////////////////////////////
+			// Ѕлок определени€ сотрудника отдела HR дл€ заполнени€ анкеты
+			var hrSubdivision = [];
+			var n = 0;
+			function getSubdivision(item) {
+					hrSubdivision.push(item);
+					var childSub = XQuery("for $elem in subdivisions where $elem/parent_object_id=" + item + " return $elem");
+
+					for(sub in childSub) {
+						getSubdivision(sub.id);
+					}
+				}
+
+
+			for(shops in hrShopsArr){
+				for(item in shops){
+					getSubdivision(item);
+				}
+
+				userShop = ArrayOptFirstElem(XQuery("for $elem in collaborators where $elem/id="+userId+" return $elem"));
+				for(div in hrSubdivision){
+					if(userShop.position_parent_id == div){
+						hrId = hrArr[n];
+					}
+				}
+				n++;
+				hrSubdivision = [];
+			}
+			/////////////////////////////////////////////////////
+
+			// —оздание результирующего документа
+			var resultDoc = OpenNewDoc('x-local://udt/udt_cc_exitinterview.xmd');
+			resultDoc.TopElem.collab_id = userId;
+			resultDoc.TopElem.boss_id = bossId;
+			resultDoc.TopElem.hr_id = hrId;
+			resultDoc.TopElem.dismiss_date = Date(date);
+			resultDoc.BindToDb();
+			var resultID = resultDoc.DocID;
+
+			
+
+			// —оздание анкеты дл€ сотрудника
+			var collabForm = OpenNewDoc('x-local://udt/udt_cc_exitinterview_collab.xmd');
+			collabForm.TopElem.collab_id = userId;
+			collabForm.TopElem.exit_interview_result = resultID;
+			collabForm.BindToDb();
+			var collabFormID = collabForm.DocID;
+			collabForm.Save();
+
+			try{
+			// —оздание анкеты дл€ руководител€
+			var bossForm = OpenNewDoc('x-local://udt/udt_cc_boss_exitinterview.xmd');
+			bossForm.TopElem.boss_id = bossId;
+			bossForm.TopElem.exit_interview_result = resultID;
+			bossForm.BindToDb();
+			var bossFormID = bossForm.DocID;
+			bossForm.Save();
+			}
+			catch(e){
+				alert(e);
+			}
+
+			// —оздание анкеты дл€ сотрудника HR
+			var hrForm = OpenNewDoc('x-local://udt/udt_cc_exitinterview_hr.xmd');
+			hrForm.TopElem.hr_id = hrId;
+			hrForm.TopElem.exit_interview_result = resultID;
+			hrForm.BindToDb();
+			var hrFormID = hrForm.DocID;
+			hrForm.Save();
+
+			// «аполнение результирующего документа
+			resultDoc.TopElem.collab_form = collabFormID;
+			resultDoc.TopElem.boss_form = bossFormID;
+			resultDoc.TopElem.hr_form = hrFormID;
+
+			resultDoc.Save();
+
+			// ќтправка уведомлений
+			try{
+				tools.create_notification('collab_notif', userId, '', resultID);
+				tools.create_notification('boss_notif', bossId, '', resultID);
+				tools.create_notification('hr_notif', hrId, '', resultID);
+			}
+			catch(e){
+				alert(e);
+			}
+		}
+		catch(e){
+			Response.Write(e);
+		}
+
+		Response.Write('Success---'+ bossFormID);
+	}
+
+	// блок сохранени€ анкеты сотрудника
+	if(Request.Form.HasProperty('form')){
+		var form = StrReplace(Request.Form.form, 'id_', '');
+		var formDoc = OpenDoc(UrlFromDocID(Int(form)));
+
+		var question_1 = Request.Form.quest_1;
+		var question_2 = Request.Form.quest_2;
+		var question_3 = Request.Form.quest_3;
+		var question_4 = Request.Form.quest_4;
+		var question_5 = Request.Form.quest_5;
+		var question_6 = Request.Form.quest_6;
+		var question_7 = Request.Form.quest_7;
+		var question_8 = Request.Form.quest_8;
+		var question_9 = Request.Form.quest_9;
+		var question_10 = Request.Form.quest_10;
+
+		formDoc.TopElem.question_1 = question_1;
+		formDoc.TopElem.question_2 = question_2;
+		formDoc.TopElem.question_3 = question_3;
+		formDoc.TopElem.question_4 = question_4;
+		formDoc.TopElem.question_5 = question_5;
+		formDoc.TopElem.question_6 = question_6;
+		formDoc.TopElem.question_7 = question_7;
+		formDoc.TopElem.question_8 = question_8;
+		formDoc.TopElem.question_9 = question_9;
+		formDoc.TopElem.question_10 = question_10;
+
+		formDoc.TopElem.filling_date = Date();
+		formDoc.TopElem.is_done = true;
+
+		formDoc.Save();
+
+		// провер€ем, если остальные анкеты тоже сохранены, то в результирующей анкете ставим признак is_done
+		var resultDoc = ArrayOptFirstElem(XQuery("for $elem in cc_exitinterviews where $elem/collab_form="+form+" return $elem"));
+		if(resultDoc.boss_form.ForeignElem.is_done==true&&resultDoc.hr_form.ForeignElem.is_done==true){
+			_doc = OpenDoc(UrlFromDocID(Int(resultDoc.id)));
+			_doc.TopElem.is_done=true;
+			_doc.Save();
+		}
+
+		Response.Write('Success');
+	}
+
+	// блок сохранени€ анкеты руководител€
+	if(Request.Form.HasProperty('form_boss')){
+		var form = StrReplace(Request.Form.form_boss, 'id_', '');
+		var formDoc = OpenDoc(UrlFromDocID(Int(form)));
+
+		var question_1 = HtmlToPlainText(Request.Form.quest_1);
+		var question_2 = HtmlToPlainText(Request.Form.quest_2);
+		var question_3 = HtmlToPlainText(Request.Form.quest_3);
+		var question_4 = HtmlToPlainText(Request.Form.quest_4);
+		var question_5 = HtmlToPlainText(Request.Form.quest_5);
+
+		formDoc.TopElem.question_1 = question_1;
+		formDoc.TopElem.question_2 = question_2;
+		formDoc.TopElem.question_3 = question_3;
+		formDoc.TopElem.question_4 = question_4;
+		formDoc.TopElem.question_5 = question_5;
+
+		formDoc.TopElem.filling_date = Date();
+		formDoc.TopElem.is_done = true;
+
+		formDoc.Save();
+
+		// провер€ем, если остальные анкеты тоже сохранены, то в результирующей анкете ставим признак is_done
+		var resultDoc = ArrayOptFirstElem(XQuery("for $elem in cc_exitinterviews where $elem/boss_form="+form+" return $elem"));
+		if(resultDoc.collab_form.ForeignElem.is_done==true&&resultDoc.hr_form.ForeignElem.is_done==true){
+			_doc = OpenDoc(UrlFromDocID(Int(resultDoc.id)));
+			_doc.TopElem.is_done=true;
+			_doc.Save();
+		}
+
+		Response.Write('Success');
+	}
+
+	// блок сохранени€ анкеты HR
+	if(Request.Form.HasProperty('form_hr')){
+		var form = StrReplace(Request.Form.form_hr, 'id_', '');
+		var formDoc = OpenDoc(UrlFromDocID(Int(form)));
+
+		var question_1 = Request.Form.quest_1;
+		var question_2 = Request.Form.quest_2;
+		var question_3 = Request.Form.quest_3;
+		var question_4 = Request.Form.quest_4;
+		var question_5 = Request.Form.quest_5;
+
+		formDoc.TopElem.question_1 = question_1;
+		formDoc.TopElem.question_2 = question_2;
+		formDoc.TopElem.question_3 = question_3;
+		formDoc.TopElem.question_4 = question_4;
+		formDoc.TopElem.question_5 = question_5;
+
+		formDoc.TopElem.filling_date = Date();
+		formDoc.TopElem.is_done = true;
+
+		formDoc.Save();
+
+		// провер€ем, если остальные анкеты тоже сохранены, то в результирующей анкете ставим признак is_done
+		var resultDoc = ArrayOptFirstElem(XQuery("for $elem in cc_exitinterviews where $elem/hr_form="+form+" return $elem"));
+		if(resultDoc.boss_form.ForeignElem.is_done==true&&resultDoc.collab_form.ForeignElem.is_done==true){
+			_doc = OpenDoc(UrlFromDocID(Int(resultDoc.id)));
+			_doc.TopElem.is_done=true;
+			_doc.Save();
+		}
+
+		Response.Write('Success');
+	}
+%>

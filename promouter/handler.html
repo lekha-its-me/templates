@@ -1,0 +1,39 @@
+<%
+	if(Request.Form.HasProperty('date_from'))
+	{
+
+//		var date_from = Request.Form.date_from;
+//		var date_to = Request.Form.date_to;
+//		var shop = Request.Form.shop;
+//		var shop_name = ArrayOptFirstElem(XQuery("for $elem in subdivisions where $elem/id="+shop+" return $elem"));
+//
+//		var list = XQuery("for $elem in cc_promouter_working_time return $elem");
+//
+		Response.Write('lalala');
+	}
+	else{
+	try{
+			var user = Request.Form.user;
+			var brand = Request.Form.brand;
+			var month = Request.Form.month;
+			var hours = Request.Form.hours;
+			var shop = ArrayOptFirstElem(XQuery("for $elem in collaborators where $elem/id="+user+" return $elem"));
+
+			var doc = OpenNewDoc('x-local://udt/udt_cc_promouter_working_time.xmd');
+			doc.TopElem.user = user;
+			doc.TopElem.brand = brand;
+			doc.TopElem.date = month;
+			doc.TopElem.time = hours;
+			doc.TopElem.shop = shop.position_parent_id;
+
+			doc.BindToDb();
+			doc.Save();
+			}
+			catch(e)
+			{
+				Response.Write("Ошибка сохранения");
+			}
+			
+
+	}
+%>

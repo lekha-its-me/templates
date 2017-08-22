@@ -1,0 +1,189 @@
+<%
+	var id = StrReplace(Request.Form.id, 'id_', '');
+	var defaultPhoto = '/my_template/img/nophoto.jpg';
+	var defaultBossPhoto = '/my_template/img/nophoto.jpg';
+	var is_exist = false;
+	var isForSelect;
+	
+
+	// получаем данные о сотруднике и его руководителе
+	var userDoc = OpenDoc(UrlFromDocID(Int(id)));
+	if(userDoc.TopElem.pict_url !='') {
+		defaultPhoto = userDoc.TopElem.pict_url;
+	}
+
+	if(userDoc.TopElem.position_id.ForeignElem.is_boss==true){
+		var child = ArrayOptFirstElem(XQuery("for $elem in subdivisions where $elem/id="+userDoc.TopElem.position_parent_id+" return $elem"));
+		var bossId = ArrayOptFirstElem(XQuery("for $elem in collaborators where $elem/position_parent_id="+child.parent_object_id.ForeignElem.name+" and $elem/is_dismiss!=true() and ForeignElem($elem/position_id)/is_boss=true() return $elem"));
+	} else {
+		var bossId = ArrayOptFirstElem(XQuery("for $elem in collaborators where $elem/position_parent_id="+userDoc.TopElem.position_parent_id+" and $elem/is_dismiss!=true() and ForeignElem($elem/position_id)/is_boss=true() return $elem"));
+	}
+
+	
+	if(bossId == undefined){
+		isForSelect = false;
+		var childSub = ArrayOptFirstElem(XQuery("for $elem in subdivisions where $elem/id="+userDoc.TopElem.position_parent_id+" return $elem"));
+		alert(childSub.parent_object_id);
+		var divList = ArrayExtractKeys(XQuery("for $elem in subdivisions where $elem/parent_object_id="+childSub.parent_object_id+" return $elem"),'id');
+		divList = divList.join(',');
+		var collabList = XQuery("for $elem in collaborators where MatchSome($elem/position_parent_id, "+divList+") order by $elem/fullname return $elem");
+		%>	
+			<script>
+				$('#bossZone').hide();
+				$('.userInfo').css('width', '280px');
+			</script>
+		<%
+		isForSelect = true;
+	} else {
+		var bossDoc = OpenDoc(UrlFromDocID(Int(bossId.id)));
+		if(bossDoc.TopElem.pict_url !='') {
+			defaultBossPhoto = bossDoc.TopElem.pict_url;
+		}
+
+		var formDoc = ArrayOptFirstElem(XQuery("for $elem in cc_exitinterviews where $elem/collab_id="+userDoc.TopElem.id+" and $elem/boss_id="+bossId.id+" and $elem/is_done=false() return $elem "));
+		if(formDoc!=undefined){
+			if(ArrayCount(formDoc)>0){
+				var form_id = 'id_'+formDoc.boss_form;
+				if(formDoc.boss_form.ForeignElem.is_done == false){
+					%>
+						<script>
+							$('.create').prop('disabled', true);
+							$('.alert-text').removeClass('alert-success', '');
+							$('.alert-text').addClass('alert-danger');
+							$('div.notification > div > p').html('Для данного сотрудника уже есть незаполненная анкета');
+							$('.notification').show();
+							$('.fill').attr('id', '<%=form_id%>');
+							$('.fill').show();
+						</script>
+					<%
+				} else {
+					%>
+						<script>
+							$('.create').prop('disabled', true);
+							$('div.notification > div > p').html('Анкета заполнена');
+							$('.notification').show();
+							$('.fill').attr('id', '<%=form_id%>');
+							$('.fill').html('Просмотреть анкету');
+							$('.fill').show();
+						</script>
+					<%
+				}
+				
+			}
+		}
+
+	}
+%>
+
+<div class="formZone">
+	<div class="notification">
+		<div class="alert alert-success alert-dismissible alert-text" role="alert">
+		  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+		  <p></p>
+		</div>
+	</div>
+	<div class="selectBoss"></div>
+	<div class="rebs-pa">
+		<div class="rebs-pa-grey customAddClear">
+			<div class="rebs-pa-person">
+				<img style="width: 70px" src="<%=defaultPhoto%>"/>
+				<span class="userInfo">
+					<h5>Сотрудник: <%=userDoc.TopElem.fullname%></h5>
+					<h5>Магазин: <%=userDoc.TopElem.position_parent_name%></h5>
+					<h5>Должность: <%=userDoc.TopElem.position_name%></h5>
+				</span>
+			</div>
+			<%
+				if(!isForSelect){
+					%>
+						<div class="rebs-pa-person" id="bossZone">
+							<img style="width: 70px" src="<%=defaultBossPhoto%>"/>
+							<span class="userInfo">
+								<h5>Руководитель: <%=bossDoc.TopElem.fullname%></h5>
+								<h5>Магазин: <%=bossDoc.TopElem.position_parent_name%></h5>
+								<h5>Должность: <%=bossDoc.TopElem.position_name%></h5>
+							</span>
+						</div>
+					<%	
+				} else { %>
+					<div class="rebs-pa-person">
+						<label for="bossSelector">Выберите руководителя из списка</label>
+						<select class="form-control" id="bossSelector">
+							<%
+								for(elem in collabList){
+									Response.Write('<option value="'+elem.id+'">'+elem.fullname+'</option>')
+								}
+							%>
+						</select>
+					</div> <%
+					isForSelect = true;
+				}
+			%>
+			
+		</div>
+		<div class="form-group dateInput">
+			<label for="date">Дата увольнения</label>
+			<input class="form-control" type="date" name="date" id="date" required="required" />
+		</div>
+		<div class="btnGroup">
+			<button class="btn btn-default btn-lg create">Создать анкету</button>
+			<button class="btn btn-default btn-lg fill">Перейти к заполнению анкеты</button>
+		</div>
+	</div>
+</div>
+<script>
+
+$(document).ready(function(){
+	$('.create').click(function(){
+		<% 
+			if(!isForSelect){
+				%>
+					var bossId = "<%='id_' + bossDoc.TopElem.id%>";
+				<%
+			} else { %>
+				var bossId = $('#bossSelector :selected').val();
+				<%
+			}
+		%>
+		var userId = "<%='id_' + userDoc.TopElem.id%>";
+		var date = $('#date').val();
+		$.ajax({
+			type:"POST",
+			url: "custom_web_template.html?object_id=6451895140345654518",
+			data: 'boss=' + bossId + '&user=' + userId + '&date=' + date,
+			error: function(err) { alert("error ajax: "+err); },
+			success: function(resp)
+			{
+				var response = resp.split('---');
+				if(response[0] == 'Success'){
+					$('div.notification > div > p').html('Анкеты успешно созданы!');
+					$('.notification').show();
+					$('.create').prop('disabled', true);
+					$('.fill').show();
+					$('.fill').attr('id', response[1]);
+				}
+			}
+		});
+	});
+
+	$('.fill').click(function(){
+		var content_obj = $('.formZone');
+		// var id = $(this).data('paid');
+		content_obj.hide();
+		var formId = $('.fill').attr('id');
+		console.log(formId);
+		$.ajax({
+			type:"POST",
+			url: "custom_web_template.html?object_id=6454100372994266217",
+			data: 'form=' + formId,
+			error: function(err) { alert("error ajax: "+err); },
+			success: function(resp)
+			{
+				content_obj.html(resp).fadeIn(200);
+				window.scroll(0,0); 
+			}
+		});
+	});
+});
+	
+</script>

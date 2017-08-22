@@ -1,0 +1,61 @@
+<%
+	if(Request.Form.HasProperty('date_from')){
+		var date_from = Request.Form.date_from;
+		var date_to = Request.Form.date_to;
+		var forms = XQuery("for $elem in cc_exitinterviews where $elem/dismiss_date>='"+date_from+"' and $elem/dismiss_date<='"+date_to+"' order by ForeignElem($elem/collab_id)/fullname return $elem");
+	} else {
+		var forms = [];
+	}
+
+%>
+
+<script>
+	function open_in_excel_get(data_string){
+		data_string = $('.resultTable').html();
+		$.ajax({
+			type:"POST",
+			url: "custom_web_template.html?object_id=6449294203009509668",
+			data: 'forms=' + data_string,
+			error: function(err) { alert("error ajax: "+err); },
+			success: function(resp)
+			{
+				location.href = 'assessment_excel_export.html';
+			}
+		});
+	}
+</script>
+
+<table class="table table-hover resultTable">
+	<thead id="head">
+		<tr class="head">
+			<th>Сотрудник</th>
+			<th>Магазин</th>
+			<th>Должность</th>
+			<th>Дата увольнения</th>
+			<th>Анкета сотрудника</th>
+			<th>Анкета руководителя</th>
+			<th>Анкета HR</th>
+			<th>Признак заполненности</th>
+		</tr>
+	</thead>
+	<tbody id="body">
+		<%
+			for(item in forms){
+				Response.Write('<tr><td>'+item.collab_id.ForeignElem.fullname+'</td><td>'+item.collab_id.ForeignElem.position_parent_name+'</td><td>'+item.collab_id.ForeignElem.position_name+'</td><td>'+item.dismiss_date+'</td>');
+				item.collab_form.ForeignElem.is_done==true?Response.Write('<td class="checkForForms"><span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span></td>'):Response.Write('<td class="checkForForms"><span class="glyphicon glyphicon-remove text-danger" aria-hidden="true"></span></td>');
+				item.boss_form.ForeignElem.is_done==true?Response.Write('<td class="checkForForms"><span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span></td>'):Response.Write('<td class="checkForForms"><span class="glyphicon glyphicon-remove text-danger" aria-hidden="true"></span></td>');
+				item.hr_form.ForeignElem.is_done==true?Response.Write('<td class="checkForForms"><span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span></td>'):Response.Write('<td class="checkForForms"><span class="glyphicon glyphicon-remove text-danger" aria-hidden="true"></span></td>');
+				item.is_done==true?Response.Write('<td class="checkForForms"><span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span></td>'):Response.Write('<td class="checkForForms"><span class="glyphicon glyphicon-remove text-danger" aria-hidden="true"></span></td>');
+				Response.Write('</tr>');
+			}
+		%>
+	</tbody>
+</table>
+<button class="btn btn-default" onclick="exportToExcel()">Экспорт в Excel</button>
+
+
+<script>
+	function exportToExcel(){
+			open_in_excel_get($('.resultTable').html());
+		}
+</script>

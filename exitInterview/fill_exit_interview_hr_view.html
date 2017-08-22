@@ -1,0 +1,118 @@
+<%
+	var id = StrReplace(Request.Form.id, 'id_', '');
+	var defaultPhoto = '/my_template/img/nophoto.jpg';
+	var defaultBossPhoto = '/my_template/img/nophoto.jpg';
+	var is_exist = false;
+	var doc = ArrayOptFirstElem(XQuery("for $elem in cc_exitinterviews where $elem/hr_form="+id+" return $elem"));
+
+	var userDoc = OpenDoc(UrlFromDocID(Int(doc.collab_id)));
+	if(userDoc.TopElem.pict_url !='') {
+		defaultPhoto = userDoc.TopElem.pict_url;
+	}
+
+	var bossDoc = OpenDoc(UrlFromDocID(Int(doc.boss_id)));
+	if(bossDoc.TopElem.pict_url !='') {
+		defaultBossPhoto = bossDoc.TopElem.pict_url;
+	}
+%>
+<script>
+$(document).ready(function(){
+	$('.checkBeforeSave').click(function(){
+		var quest_1 = $('#question_1 :selected').html();
+		var quest_2 = $('#question_2 :selected').html();
+		var quest_3 = $('#question_3 :selected').html();
+		var quest_4 = $('#question_4 :selected').html();
+		var quest_5 = $('#question_5 :selected').html();
+		var form_hr = '<%=id%>';
+
+		$.ajax({
+				type:"POST",
+				url: "custom_web_template.html?object_id=6451895140345654518",
+				data: 'form_hr=' + form_hr + '&quest_1=' + quest_1 + '&quest_2=' + quest_2 + '&quest_3=' + quest_3 + '&quest_4=' + quest_4 +
+				'&quest_5=' + quest_5,
+				error: function(err) { alert("error ajax: "+err); },
+				success: function(resp)
+				{
+					if(resp == 'Success'){
+						$('select, button').each(function(){
+							$(this).prop('disabled', true);
+						});
+						window.scroll(0,0);
+						$('.notification').append('<div class="alert alert-success alert-dismissible fade in"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><p class="messageText"></p></div>');
+						$('.notification').show();
+						$('.messageText').html('Анкета успешно сохранена');
+						setTimeout(location.reload(), 3000);
+					}
+				}
+			});
+
+	});
+});
+	
+</script>
+<div class="formZone">
+	<div class="notification"></div>
+	<div class="rebs-pa">
+		<div class="rebs-pa-grey customAddClear">
+			<div class="rebs-pa-person">
+				<img style="width: 70px" src="<%=defaultPhoto%>"/>
+				<span class="userInfo">
+					<h5>Сотрудник: <%=userDoc.TopElem.fullname%></h5>
+					<h5>Магазин: <%=userDoc.TopElem.position_parent_name%></h5>
+					<h5>Должность: <%=userDoc.TopElem.position_name%></h5>
+				</span>
+			</div>
+			<div class="rebs-pa-person">
+				<img style="width: 70px" src="<%=defaultBossPhoto%>"/>
+				<span class="userInfo">
+					<h5>Руководитель: <%=bossDoc.TopElem.fullname%></h5>
+					<h5>Магазин: <%=bossDoc.TopElem.position_parent_name%></h5>
+					<h5>Должность: <%=bossDoc.TopElem.position_name%></h5>
+				</span>
+			</div>
+
+		</div>
+		<form class="hrForm">
+			<div class="form-group">
+				<label>По чьей инициативе сотрудник покинул Компанию?</label>
+				<select class="form-control" id="question_1">
+					<option>По собственной инициативе</option>
+					<option>По инициативе Компании</option>
+				</select>
+			</div>
+			<div class="form-group">
+				<label>Какие взаимоотношения у сотрудника складывались с коллегами?</label>
+				<select class="form-control" id="question_2">
+					<option>Отличные - планируют и дальше продолжать общаться вне работы</option>
+					<option>Нормальные - общались исключительно по рабочим вопросам</option>
+					<option>Негативные - не поддерживали никаких взаимоотношений</option>
+				</select>
+			</div>
+			<div class="form-group">
+				<label>Насколько компетентным было руководство и управление?</label>
+				<select class="form-control" id="question_3">
+					<option>Отличные - руководитель оказывал помощь в рабочих вопросах, не возникало конфликтных ситуаций</option>
+					<option>Нормальные - руководитель оказывал помощь в рабочих вопросах, периодически возникали спорные ситуации</option>
+					<option>Нейтральные - общались только при наличии рабочих вопросов</option>
+					<option>Негативные - не получалось найти общий язык</option>
+				</select>
+			</div>
+			<div class="form-group">
+				<label>Насколько четко были определены функциональные задачи сотрудника?</label>
+				<select class="form-control" id="question_4">
+					<option>Четко/понятно - выполнял свои функциональные задачи</option>
+					<option>Не четко / не понятно - выполнял свои функциональные задачи и коллег по отделу</option>
+				</select>
+			</div>
+			<div class="form-group">
+				<label>Чего не хватало сотруднику в работе для выполнения функциональных задач?</label>
+				<select class="form-control" id="question_5">
+					<option>Доступ к определенному ПО</option>
+					<option>Отстутствие / неукомплектованность орг. техникой</option>
+					<option>Обратной связи от руководителя / коллег</option>
+				</select>
+			</div>
+			<button class="btn btn-default checkBeforeSave" type="button">Сохранить</button>
+		</form>
+	</div>
+</div>

@@ -1,0 +1,82 @@
+<%
+	var formId = Request.Form.form;
+	var form = StrReplace(formId, 'id_', '');
+
+	var _doc = ArrayOptFirstElem(XQuery("for $elem in cc_boss_exitinterviews where $elem/id="+form+" return $elem"));
+	if(_doc != undefined){
+		var _Doc = OpenDoc(UrlFromDocID(_doc.id)).TopElem;
+		// если анкета уже заполнена, делать поля неактивными
+		if(_Doc.is_done !=false){
+			%>
+				<script>
+					$('#quest_1').val('<%=_Doc.question_1%>').prop('disabled', true);
+					$('#quest_2').val('<%=_Doc.question_2%>').prop('disabled', true);
+					$('#quest_3').val('<%=_Doc.question_3%>').prop('disabled', true);
+					$('#quest_4').val('<%=_Doc.question_4%>').prop('disabled', true);
+					$('#quest_5').val('<%=_Doc.question_5%>').prop('disabled', true);
+					$('.checkBeforeSave').prop('disabled', true);
+				</script>
+			<%
+		}
+	}
+%>
+<script>
+	$(document).ready(function(){
+		// функция, которая отправляет данные на сервер для сохранения
+		$('.checkBeforeSave').click(function(){
+			var quest_1 = $('#quest_1').val();
+			var quest_2 = $('#quest_2').val();
+			var quest_3 = $('#quest_3').val();
+			var quest_4 = $('#quest_4').val();
+			var quest_5 = $('#quest_5').val();
+			var formId = '<%=formId%>';
+
+			$.ajax({
+				type:"POST",
+				url: "custom_web_template.html?object_id=6451895140345654518",
+				data: 'form_boss=' + formId + '&quest_1=' + quest_1 + '&quest_2=' + quest_2 + '&quest_3=' + quest_3 + '&quest_4=' + quest_4 +
+				'&quest_5=' + quest_5,
+				error: function(err) { alert("error ajax: "+err); },
+				success: function(resp)
+				{
+					if(resp == 'Success'){
+						$('textarea, button').each(function(){
+							$(this).prop('disabled', true);
+						});
+						window.scroll(0,0);
+						$('.notification').append('<div class="alert alert-success alert-dismissible fade in"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><p class="messageText"></p></div>');
+						$('.notification').show();
+						$('.messageText').html('Анкета успешно сохранена');
+						setTimeout(location.reload(), 3000);
+					}
+				}
+			});
+		});
+	});
+</script>
+<div class="fillForm">
+	<div class="notification"></div>
+	<form>
+		<div class="form-group">
+			<label>Как Вы думаете, почему увольняется сотрудник?</label>
+			<textarea class="form-control" rows="3" id="quest_1"></textarea>
+		</div>
+		<div class="form-group">
+			<label>Какие взаимоотношения у Вас складывались с увольняющимся сотрудником?</label>
+			<textarea class="form-control" rows="3" id="quest_2"></textarea>
+		</div>
+		<div class="form-group">
+			<label>Какие взаимоотношения складывались у увольняющегося сотрудника с коллективом подразделения?</label>
+			<textarea class="form-control" rows="3" id="quest_3"></textarea>
+		</div>
+		<div class="form-group">
+			<label>Как Вы оцениваете качество выполнения поставленных задач сотрудником?</label>
+			<textarea class="form-control" rows="3" id="quest_4"></textarea>
+		</div>
+		<div class="form-group">
+			<label>Как Вы оцениваете уровень профессионального развития сотрудника за время работы в вашем подразделении?</label>
+			<textarea class="form-control" rows="3" id="quest_5"></textarea>
+		</div>
+		<button class="btn btn-default checkBeforeSave" type="button">Сохранить</button>
+	</form>
+</div>

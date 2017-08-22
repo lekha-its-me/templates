@@ -1,0 +1,190 @@
+<%
+	// получаем список всех сотрудников магазина С079
+	// var employeeList = XQuery("for $elem in collaborators where $elem/position_parent_name='C079' and $elem/is_dismiss!=true() order by $elem/fullname return $elem");
+	var employeeList = XQuery("for $elem in collaborators where $elem/id='5716787272568170699' return $elem");
+
+	// получаем список супервайзеров магазина С079
+	// var supervisorList = XQuery("for $elem in collaborators where $elem/position_parent_name='C079' and $elem/position_name='Супервайзер' and $elem/is_dismiss!=true() order by $elem/fullname return $elem");
+	var supervisorList = XQuery("for $elem in collaborators where $elem/id='6011059950027546458' return $elem");
+
+
+%>
+<script type="text/javascript">
+	function createAssessment() {
+		var date = $('#date').val();
+		var group = $('#group').val();
+		$.ajax({
+				type:"POST",
+				url:'my_template/templates/klm/generate_assessment_server.html',
+				data: "date=" + date + "&group=" + group,
+				success: function(request) {
+					if (request !== 'Error') 
+					{
+						var firstArr = request.split('qqq');
+						$('#appraise_id').val(firstArr[0]);
+
+						var secondArr = firstArr[1].split('!!!');
+						for(var i = 0; i < secondArr.length; i++)
+						{
+							if (secondArr[i]!='	') {
+								// $('#addedUsers').append('<li>' + secondArr[i] + '</li>');
+								$('#addedUsers').append('<li>' +  + '</li>');
+							}
+						}
+					} else {
+						alert(request);
+					}
+					console.log(request);
+				}
+			});
+	}
+
+	function fillAssessment() {
+		var user = $('#user').val();
+		var supervisor = $('#supervisor').val();
+		var appraise_id  = $('#appraise_id').val();
+		$.ajax({
+				type:"POST",
+				url:'my_template/templates/klm/generate_assessment_server.html',
+				data: "user=" + user + "&supervisor=" + supervisor + "&appraise_id=" + appraise_id,
+				success: function(request) {
+					alert(request); 
+				}
+			});
+	}
+</script>
+<script type="text/javascript" src="my_template/templates/klm/script.js"></script>
+<link rel="stylesheet" type="text/css" href="my_template/templates/klm/style.css"></style>
+<div class="container-fluid">
+	<div class="row">
+		<section>
+        <div class="wizard">
+            <div class="wizard-inner">
+                <div class="connecting-line"></div>
+                <ul class="nav nav-tabs" role="tablist">
+
+                    <li role="presentation" class="active">
+                        <a href="#step1" data-toggle="tab" aria-controls="step1" role="tab" title="Создание КЛН">
+                            <span class="round-tab">
+                                <i class="glyphicon glyphicon-folder-open"></i>
+                            </span>
+                        </a>
+                    </li>
+
+                    <li role="presentation" class="disabled">
+                        <a href="#step2" data-toggle="tab" aria-controls="step2" role="tab" title="Добавление сотрудника">
+                            <span class="round-tab">
+                                <i class="glyphicon glyphicon-pencil"></i>
+                            </span>
+                        </a>
+                    </li>
+                    <li role="presentation" class="disabled">
+                        <a href="#step3" data-toggle="tab" aria-controls="step3" role="tab" title="Step 3">
+                            <span class="round-tab">
+                                <i class="glyphicon glyphicon-picture"></i>
+                            </span>
+                        </a>
+                    </li>
+
+                    <li role="presentation" class="disabled">
+                        <a href="#complete" data-toggle="tab" aria-controls="complete" role="tab" title="Complete">
+                            <span class="round-tab">
+                                <i class="glyphicon glyphicon-ok"></i>
+                            </span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <form role="form">
+                <div class="tab-content">
+                    <div class="tab-pane active" role="tabpanel" id="step1">
+                        <h3>Создание КЛН</h3>
+                        <div class="container-fluid">
+                        	<form>
+                        		<div class="form-group">
+								    <label for="date">Месяц</label>
+								    <input type="month" name="date" id="date" class="form-control" />
+								</div>
+								<div class="form-group">
+								    <label for="group">Группа</label>
+								    <select class="form-control" name="group" id="group">
+									  <option>Входящая</option>
+									  <option>Исходящая</option>
+									  <option>ЕИСС</option>
+									  <option>NPS</option>
+									  <option>Кредит</option>
+									</select>
+								</div>
+		                        <ul class="list-inline pull-right">
+		                            <li><button type="button" class="btn btn-primary next-step" onclick="createAssessment()">Сохранить и продолжить</button></li>
+		                        </ul>
+                        	</form>
+                        </div>
+                    </div>
+                    <div class="tab-pane" role="tabpanel" id="step2">
+                        <h3>Добавление сотрудника</h3>
+                    	<div class="container-fluid">
+                    		<div class="col-md-3">
+                    			<div class="panel panel-default">
+								  <div class="panel-heading">
+								    <h3 class="panel-title">Уже добавленные сотрудники</h3>
+								  </div>
+								  <div class="panel-body">
+								  <ul id="addedUsers"></ul>
+								  </div>
+								</div>
+                    		</div>
+                    		<div class="col-md-8">
+	                        	<form>
+	                        		<div class="form-group">
+									    <label for="exampleInputEmail1">Сотрудник</label>
+									    <select class="form-control">
+										  <%
+										  	for(employee in employeeList)
+									      		{
+									      			Response.Write("<option value='"+employee.id+"' id='user'>" + employee.fullname + "</option>");
+									      		}
+										  %>
+										</select>
+									</div>
+									<div class="form-group">
+									    <label for="exampleInputEmail1">Супервайзер</label>
+									    <select class="form-control">
+										  <%
+										  	for(supervisor in supervisorList)
+									      		{
+									      			Response.Write("<option value='"+supervisor.id+"' id='supervisor'>" + supervisor.fullname + "</option>");
+									      		}
+										  %>
+										</select>
+									</div>
+			                        <ul class="list-inline pull-right">
+	                            		<li><button type="button" class="btn btn-default prev-step">Назад</button></li>
+			                            <li><button type="button" class="btn btn-primary next-step" onclick="fillAssessment()">Создать КЛН</button></li>
+			                        </ul>
+			                        <input type="hidden" name="appraise_id" id="appraise_id">
+	                        	</form>
+                    		</div>
+                    	</div>
+                    </div>
+                    <div class="tab-pane" role="tabpanel" id="step3">
+                        <h3>Step 3</h3>
+                        <p>This is step 3</p>
+                        <ul class="list-inline pull-right">
+                            <li><button type="button" class="btn btn-default prev-step">Previous</button></li>
+                            <li><button type="button" class="btn btn-default next-step">Skip</button></li>
+                            <li><button type="button" class="btn btn-primary btn-info-full next-step">Save and continue</button></li>
+                        </ul>
+                    </div>
+                    <div class="tab-pane" role="tabpanel" id="complete">
+                        <h3>Complete</h3>
+                        <p>You have successfully completed all steps.</p>
+                    </div>
+                    <div class="clearfix"></div>
+                </div>
+            </form>
+        </div>
+    </section>
+   </div>
+</div>

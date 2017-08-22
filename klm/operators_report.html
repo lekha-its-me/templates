@@ -1,0 +1,62 @@
+<script>
+	function showReport(){
+		var date = $('.month').val();
+		$('.resultTable').hide();
+		$('.resultTable').empty();
+		$('.defaultMessage').html('Загрузка...').show();
+		$.ajax({
+				type:"POST",
+				url: "custom_web_template.html?object_id=6449308126156042703",
+				data: 'date=' + date,
+				error: function(err) { alert("error ajax: "+err); },
+				success: function(resp)
+				{
+					console.log(resp);
+					var data = jQuery.parseJSON(resp);
+					$('.defaultMessage').hide();
+					$('.resultTable').show();
+					$('.resultTable').append('<thead><tr><th>ФИО</th><th>Итоговый балл</th></tr></thead>');
+					$('.resultTable').append('<tbody>');
+					for(item in data) {
+						$('.resultTable').append('<tr><td>'+data[item].person+'</td><td>'+data[item].overall+'</td></tr>');
+					}
+					$('.resultTable').append('</tbody>');
+				}
+			});
+	}
+
+	function open_in_excel_get(data_string){
+			data_string = $('.resultTable').html();
+			$.ajax({
+				type:"POST",
+				url: "custom_web_template.html?object_id=6449294203009509668",
+				data: 'operator=' + data_string,
+				error: function(err) { alert("error ajax: "+err); },
+				success: function(resp)
+				{
+					location.href = 'assessment_excel_export.html';
+				}
+			});
+		}
+</script>
+
+<div class="inputZone">
+	<div class="form-group">
+		<label for="month">Месяц</label>
+		<input type="month" class="month" name="month" id="month">
+		<button class="btn btn-default" onclick="showReport()">Показать отчет</button>
+	</div>
+</div>
+<div class="defaultMessage"></div>
+<div class="reportZone">
+	<table class="table table-hover resultTable">
+		
+	</table>
+	<input type="button" class="btn btn-default" value="Экспорт в Excel" onclick="exportToExcel()">
+</div>
+
+<script>
+	function exportToExcel(){
+			open_in_excel_get($('.resultTable').html());
+		}
+</script>

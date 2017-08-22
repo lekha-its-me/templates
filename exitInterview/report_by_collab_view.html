@@ -1,0 +1,133 @@
+<%
+	var id = StrReplace(Request.Form.id, 'id_', '');
+	var resultDoc = OpenDoc(UrlFromDocID(Int(id))).TopElem;
+%>
+
+<div class="reportZone">
+<div class="well well-sm"><h4><%=resultDoc.collab_id.ForeignElem.fullname%></h4></div>
+	<ul class="nav nav-tabs" role="tablist">
+    <li role="presentation" class="active"><a href="#collab" aria-controls="collab" role="tab" data-toggle="tab">Анкета сотрудника</a></li>
+    <li role="presentation"><a href="#boss" aria-controls="boss" role="tab" data-toggle="tab">Анкета руководителя</a></li>
+    <li role="presentation"><a href="#hr" aria-controls="hr" role="tab" data-toggle="tab">Анкета HR</a></li>
+  </ul>
+
+  <!-- Tab panes -->
+  <div class="tab-content">
+    <div role="tabpanel" class="tab-pane active" id="collab">
+    	<div>
+			<div class="form-group">
+				<label for="question_1">Сколько лет Вы проработали в компании?</label>
+				<div class="answer"><%=resultDoc.collab_form.ForeignElem.question_1%></div>
+			</div>
+			<div id="question_2">
+				<label>Что Вам нравилось в занимаемой должности? (выберите не более 3-х вариантов)</label>
+				<ul>
+					<%
+						for(item in String(resultDoc.collab_form.ForeignElem.question_2).split(';')){
+							if(item!=''){
+								Response.Write('<li>'+item+'</li>');
+							}
+						}
+					%>
+				</ul>
+			</div>
+			<div id="question_3">
+				<label>Как вы оцениваете организацию рабочего места?</label>
+				<ul>
+					<%
+						for(item in String(resultDoc.collab_form.ForeignElem.question_3).split(';')){
+							if(item!=''){
+								Response.Write('<li>'+item+'</li>');
+							}
+						}
+					%>
+				</ul>
+			</div>
+			<div id="question_4">
+				<label>Укажите, пожалуйста, истинные причины Вашего увольнения (выберите не более 3-ч вариантов)?</label>
+				<ul>
+					<%
+						for(item in String(resultDoc.collab_form.ForeignElem.question_4).split(';')){
+							if(item!=''){
+								Response.Write('<li>'+item+'</li>');
+							}
+						}
+					%>
+				</ul>
+			</div>
+			<div class="form-group">
+				<label for="question_5">Какая обстановка существует внутри Вашего подразделения (департамента / отдела / магазина)?</label>
+				<div class="answer"><%=resultDoc.collab_form.ForeignElem.question_5%></div>
+			</div>
+			<div class="form-group">
+				<label for="question_6">Какие взаимоотношения у Вас складывались с коллегами?</label>
+				<div class="answer"><%=resultDoc.collab_form.ForeignElem.question_6%></div>
+			</div>
+			<div class="form-group">
+				<label for="question_7">Какие взаимоотношения у Вас складывались с руководителем?</label>
+				<div class="answer"><%=resultDoc.collab_form.ForeignElem.question_7%></div>
+			</div>
+			<div class="form-group">
+				<label for="question_8">Какие условия были предоставлены Вам для повышения квалификации?</label>
+				<div class="answer"><%=resultDoc.collab_form.ForeignElem.question_8%></div>
+			</div>
+			<div class="form-group">
+				<label for="question_9">Будете ли Вы в дальнейшем рассматривать предложение по работе от компании Eldorado?</label>
+				<div class="answer"><%=resultDoc.collab_form.ForeignElem.question_9%></div>
+			</div>
+			<div class="form-group">
+				<label for="question_10">Будете ли Вы рекомендовать компанию Eldorado, как работодателя своим друзьям/ знакомым?</label>
+				<div class="answer"><%=resultDoc.collab_form.ForeignElem.question_10%></div>
+			</div>
+		</div>
+    </div>
+    <div role="tabpanel" class="tab-pane" id="boss">
+    	<div>
+			<div class="form-group">
+				<label>Как Вы думаете, почему увольняется сотрудник?</label>
+				<div><%=HtmlToPlainText(OpenDoc(UrlFromDocID(Int(resultDoc.boss_form))).TopElem.question_1)%></div>
+			</div>
+			<div class="form-group">
+				<label>Какие взаимоотношения у Вас складывались с увольняющимся сотрудником?</label>
+				<div><%=HtmlToPlainText(OpenDoc(UrlFromDocID(Int(resultDoc.boss_form))).TopElem.question_2)%></div>
+			</div>
+			<div class="form-group">
+				<label>Какие взаимоотношения складывались у увольняющегося сотрудника с коллективом подразделения?</label>
+				<div><%=HtmlToPlainText(OpenDoc(UrlFromDocID(Int(resultDoc.boss_form))).TopElem.question_3)%></div>
+			</div>
+			<div class="form-group">
+				<label>Как Вы оцениваете качество выполнения поставленных задач сотрудником?</label>
+				<div><%=HtmlToPlainText(OpenDoc(UrlFromDocID(Int(resultDoc.boss_form))).TopElem.question_4)%></div>
+			</div>
+			<div class="form-group">
+				<label>Как Вы оцениваете уровень профессионального развития сотрудника за время работы в вашем подразделении?</label>
+				<div><%=HtmlToPlainText(OpenDoc(UrlFromDocID(Int(resultDoc.boss_form))).TopElem.question_5)%></div>
+			</div>
+		</div>
+    </div>
+    <div role="tabpanel" class="tab-pane" id="hr">
+    	<div>
+			<div class="form-group">
+				<label>По чьей инициативе сотрудник покинул Компанию?</label>
+				<div class="answer"><%=resultDoc.hr_form.ForeignElem.question_1%></div>
+			</div>
+			<div class="form-group">
+				<label>Какие взаимоотношения у сотрудника складывались с коллегами?</label>
+				<div class="answer"><%=resultDoc.hr_form.ForeignElem.question_2%></div>
+			</div>
+			<div class="form-group">
+				<label>Насколько компетентным было руководство и управление?</label>
+				<div class="answer"><%=resultDoc.hr_form.ForeignElem.question_3%></div>
+			</div>
+			<div class="form-group">
+				<label>Насколько четко были определены функциональные задачи сотрудника?</label>
+				<div class="answer"><%=resultDoc.hr_form.ForeignElem.question_4%></div>
+			</div>
+			<div class="form-group">
+				<label>Чего не хватало сотруднику в работе для выполнения функциональных задач?</label>
+				<div class="answer"><%=resultDoc.hr_form.ForeignElem.question_5%></div>
+			</div>
+		</form>
+    </div>
+  </div>
+</div>

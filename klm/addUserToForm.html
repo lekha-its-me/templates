@@ -1,0 +1,96 @@
+<%
+	// получаем список всех сотрудников магазина С079
+	var employeeList = XQuery("for $elem in collaborators where $elem/position_parent_name='C079' and $elem/is_dismiss!=true() order by $elem/fullname return $elem");
+	// var employeeList = XQuery("for $elem in collaborators where $elem/id='5716787272568170699' return $elem");
+
+	// получаем список супервайзеров магазина С079
+	var supervisorList = XQuery("for $elem in collaborators where $elem/position_parent_name='C079' and ($elem/position_name='Супервайзер' or $elem/position_name='Менеджер по качеству') and $elem/is_dismiss!=true() order by $elem/fullname return $elem");
+	// var supervisorList = XQuery("for $elem in collaborators where $elem/id='6011059950027546458' return $elem");
+
+%>
+
+<script type="text/javascript">
+	$('.next-step').click(function () {
+		var user = $('#user option:selected').val();
+		var supervisor = $('#supervisor option:selected').val();
+		var appraise_id  = $('#appraise_id').val();
+
+		$.ajax({
+			type:"POST",
+			url:"custom_web_template.html?object_id=6447418555298881140",
+			data: "user=" + user + "&supervisor=" + supervisor + "&appraise_id=" + appraise_id,
+			success: function(request) {
+				if(request == 0) {
+					$('.message').css("display", "block");
+					$('.message').addClass('in');
+					$('.messageText').html('Форма для выбранного сотрудника уже есть');
+					
+				} else if(request == 1) {
+					$('.message').css("display", "block");
+					$('.message').addClass('in');
+					$('.messageText').html('Невозможно добавить другого супервайзера');
+				} else {
+					var data = request.split('!!!');
+					// $('#userList').append('<li class="fillForm" data-appraise="' + appraise_id + '" id="'+ data[0] +'">' + data[1] + '</li>');
+					var default_status_obj = $('div.rebs-view-default');
+					var content_obj = $('div.main-bar');
+					var pa_id = data[0];
+
+					content_obj.hide();
+					default_status_obj.html('Загрузка..').show();
+					$.ajax({
+						type:"POST",
+						data: "pa_id=" + pa_id,
+						url:"custom_web_template.html?object_id=6444438252606196029",
+						success: function(request) {
+							$('#userList').append('<li class="fillForm" data-appraise="' + appraise_id.replace("id_", "") + '" data-id="'+ data[0] +'">' + data[1] + '</li>');
+							default_status_obj.hide();
+							content_obj.html(request).fadeIn(200);
+							window.scroll(0,0); 
+						}
+					});
+				}
+				// alert(request); 
+			},
+			error: function (e) {
+                  alert('error; ' + eval(e));
+              }
+		});
+	});
+</script>
+<div class="alert alert-danger alert-dismissible fade message">
+	<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+	  <span aria-hidden="true">&times;</span>
+	</button>
+	<p class="messageText"></p>
+</div>
+<div class="inputForm">
+	<form>
+		<div class="form-group">
+		    <label for="exampleInputEmail1">Сотрудник</label>
+		    <select class="form-control" id="user">
+			  <%
+			  	for(employee in employeeList)
+		      		{
+		      			Response.Write("<option value='"+employee.id+"'>" + employee.fullname + "</option>");
+		      		}
+			  %>
+			</select>
+		</div>
+		<div class="form-group">
+		    <label for="exampleInputEmail1">Супервайзер</label>
+		    <select class="form-control" id="supervisor">
+			  <%
+			  	for(supervisor in supervisorList)
+		      		{
+		      			Response.Write("<option value='"+supervisor.id+"'>" + supervisor.fullname + "</option>");
+		      		}
+			  %>
+			</select>
+		</div>
+        <ul class="list-inline pull-right">
+            <li><button type="button" class="btn btn-primary next-step"">Создать КЛН</button></li>
+        </ul>
+        <input type="hidden" name="appraise_id" id="appraise_id">
+	</form>
+</div>

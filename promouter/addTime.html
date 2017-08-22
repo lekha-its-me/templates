@@ -1,0 +1,221 @@
+<%
+_curUserId = curUser.id;
+//_curUserId = 5818667444740514060;
+var handler_url = 'custom_web_template.html?object_id=6395794955995591150';
+var template_list_url = 'custom_web_template.html?object_id=6395852391413337586';
+var shop = ArrayOptFirstElem(XQuery("for $elem in collaborators where $elem/id="+_curUserId+" return $elem"));
+
+var users = XQuery("for $elem in collaborators where $elem/position_parent_id="+shop.position_parent_id+" and $elem/position_name='Промоутер' and $elem/is_dismiss!=true() return $elem");
+
+if(Request.Form.HasProperty('date_from'))
+{
+	var date_from = Request.Form.date_from;
+	var date_to = Request.Form.date_to;
+	var list = XQuery("for $elem in cc_promouter_working_times where $elem/shop="+shop.position_parent_id+" and $elem/date>='"+date_from+"' and $elem/date<='"+date_to+"' return $elem");
+}
+
+%>
+<style type="text/css">
+.ui-autocomplete {
+  z-index: 100000 !important;
+}
+.my-success-alert {
+	display: none;
+}
+.my-danger-alert {
+	display: none;
+}
+.request {
+	margin-left: 20px;
+	margin-top: 20px;
+	border-top: 1px solid #EEEEEE;
+	padding-top: 10px;
+	padding-bottom: 10px;
+}
+.form-group {
+	margin-right: 20px;
+}
+table {
+	width: 100%;
+}
+.no-items {
+	text-align: center;
+}	
+</style>
+<link rel="stylesheet" type="text/css" href="/my_template/templates/promouter/easy-autocomplete.min.css">
+<link href = "https://code.jquery.com/ui/1.10.4/themes/ui-lightness/jquery-ui.css" rel = "stylesheet">
+<script src = "https://code.jquery.com/jquery-1.10.2.js"></script>
+<script src = "https://code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+
+<script>
+$(function() {
+$( "#brand" ).autocomplete({
+   source: ["ASUS","B/S/H","BOSCH","BRAUN","DELONGHI","ELECTROLUX","GoPro","GROUPE SEB","Groupe SEB Ukraine","HANSA","HUAWEI","INDESIT","KENWOOD","LENOVO","LG","MOTOROLA","MOULINEX","PHILIPS","PYRAMIDA","REDMOND","SAMSUNG","SATURN","SONY","WHIRLPOOL","ZANUSSI","ZELMER","КП ЕМИР"]
+});
+});
+</script>
+<script type="text/javascript">
+	function checkFields(){
+		if($('#user').val()!=''&&$('#brand').val()!=''&&$('#month').val()!=''&&$('#hours').val()!='')
+		{
+			saveForm();
+		}
+		else{
+			$(".my-danger-alert").css("display","block");
+				setTimeout('$(".my-danger-alert").css("display","none");',3000);
+		}
+
+		
+	}
+	function saveForm(){
+		var parsed = $('#month').val() + '-01';
+		Date.parse(parsed);
+		
+		$.ajax({
+			type:"POST",
+			url: '<%=handler_url;%>',
+			data: 'user=' + $('#user').val() + '&brand=' + $('#brand').val() + '&month=' + parsed + '&hours=' + $('#hours').val(),
+			error: function( err ) { alert( "error ajax: " + err ) },
+			success: function(resp){
+				if(resp == "Ошибка сохранения")
+					{
+						$(".my-danger-alert").css("display","block");
+						$(".my-danger-alert").text("Ошибка сохранения");
+							setTimeout('$(".my-danger-alert").css("display","none");',3000);
+					}else{
+							$('#user').val('');
+							$('#brand').val('');
+							$('#month').val('');
+							$('#hours').val('');
+							$(".my-success-alert").css("display","block");
+							setTimeout('$(".my-success-alert").css("display","none");',3000);
+					}
+
+			}
+		});
+
+	}
+</script>
+     
+<div class="customBlock">
+<div class="customLeft">
+<span class="customLeft-Head">Управление записями</span>
+<div class="customLeft-Body rebs-my-left-body">
+
+	<div class="rebs-list-search">
+		<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addTime">
+		  Внести время
+		</button>
+
+		<div class="request">
+			<form method="POST">
+				<div class="form-group">
+					<label for="date_from">Дата с: </label>
+					<input class="form-control" type="date" id="date_from" name="date_from" />
+				</div>
+				<div class="form-group">
+					<label for="date_to">Дата по: </label>
+					<input class="form-control" type="date" id="date_to" name="date_to" />
+				</div>
+				<button class="btn btn-default" type="submit">Показать</button>
+			</form>
+		</div>
+	</div>
+</div>
+</div>
+<div class="customRight">
+<div class="customBody-content">
+<div class="customBody-head">Записи</div>
+	
+<div class="rebs-view">
+<%
+	if(Request.Form.HasProperty('date_from'))
+	{%>
+	<div class="timeList">
+		<table class="table table-hover">
+			<thead>
+				<tr>
+					<th>ФИО</th>
+					<th>Магазин</th>
+					<th>Бренд</th>
+					<th>Месяц</th>
+					<th>Часов</th>
+				</tr>
+			</thead>
+			<tbody>
+				<%
+					for(item in list)
+					{
+						%>
+							<tr>
+								<td><%=item.user.ForeignElem.fullname%></td>
+								<td><%=item.shop.ForeignElem.name%></td>
+								<td><%=item.brand%></td>
+								<td><%=item.date%></td>
+								<td><%=item.time%></td>
+							</tr>
+						<%
+					}
+				%>
+			</tbody>
+		</table>
+	</div>
+	<%
+	}
+	else{%>
+	<p class="no-items">Нет подходящих записей</p>
+	<%
+	}
+	%>
+</div>
+
+</div>
+</div>
+</div>
+<div class="customClear"></div>
+</div>
+
+<div class="modal fade" id="addTime" tabindex="-1" role="dialog" aria-labelledby="addTime">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="addTime">Рабочее время промоутера</h4>
+      </div>
+      <div class="modal-body">
+      <div class="alert alert-success my-success-alert" role="alert">Успешно сохранено</div>
+      <div class="alert alert-danger my-danger-alert" role="alert">Ошибка сохранения</div>
+		<form method="POST">
+		  <div class="form-group">
+		    <label for="user">ФИО</label>
+		    <select class="form-control" id="user" required>
+				<%
+		      		for(item in users)
+		      		{
+		      			Response.Write("<option value='"+item.id+"' id='user'>" + item.fullname + "</option>");
+		      		}
+		      	%>
+		    </select>
+		  </div>
+		  <div class="form-group">
+		  	<label for="brand">Бренд</label>
+		  	<input class="form-control" type="text" id="brand" name="brand" required>
+		  </div>
+		  <div class="form-group">
+		  	<label for="month">Дата</label>
+		  	<input class="form-control" type="month" id="month" name="month" required>
+		  </div>
+			<label for="hours">Отработано часов</label>
+			<div class="input-group">
+			  <input type="text" class="form-control" id="hours" aria-describedby="basic-addon3" required>
+			  <span class="input-group-addon" id="basic-addon3">часов</span>
+			</div>
+		</form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Отмена</button>
+        <button type="button" class="btn btn-primary" onclick="checkFields()">Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>

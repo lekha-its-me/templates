@@ -1,0 +1,111 @@
+<link rel="stylesheet" type="text/css" href="/my_template/templates/promo/promoStyle.css">
+<%
+	var paID = Int(StrReplace(Request.Form.id, 'id_', ''));
+	var paDoc = OpenDoc(UrlFromDocID(paID)).TopElem;
+%>
+<script type="text/javascript">
+
+	function regulChange() {
+		if($("#isRegulations").attr("checked") == 'checked')
+		{
+			$('select#business_type').prop('disabled',true);
+			$('select#regulations_type').prop('disabled',false);
+		}
+		else 
+		{
+			$('select#business_type').prop('disabled',false);
+			$('select#regulations_type').prop('disabled',true);
+		}
+	}
+</script>
+
+<div class="rebs-view">
+	<div class="rebs-view-white">
+		<form class="addForm" action="custom_web_template.html?object_id=6373930841575207460" method="POST" enctype="multipart/form-data">
+			<div class="inputDiv">
+				<label for="title">Название акции</label>
+				<input class="textInput" type="text" id="title" name="title" value="<%=paDoc.title%>" />
+			</div>
+			<div class="dateInput">
+				<div class="dateFrom">
+					<label for="date_from">Дата начала действия акции: </label>
+					<input type="text" id="date_from" name="date_from" value="<%=paDoc.date_from%>"/>
+				</div>
+				
+				<div class="dateTo">
+					<label for="date_to">Дата окончания действия акции: </label>
+					<input type="text" id="date_to" name="date_to" value="<%=paDoc.date_to%>"/>
+				</div>
+			</div>
+			<div class="regulationsInput">
+						<label> 
+							Регламент: <input type="checkbox" name="isRegulations" id="isRegulations" <% if(paDoc.is_regulations == true) { %>checked="checked"<%}%> onchange="regulChange()"> 
+						</label>
+					</div>
+					<div class="regulationsType">
+						<label for="regulations_type">Тип регламента</label>
+						<select id="regulations_type" name="regulations_type" required="required" <% if(paDoc.is_regulations == false) { %>disabled="true"<%}%>>
+							<option selected="selected" value="<%=paDoc.regulations_type%>"><%=paDoc.regulations_type%></option>
+							<option value="Общие регламенты">Общие регламенты</option>
+							<option value="Регламенты по услугам">Регламенты по услугам</option>
+							<option value="Регламенты по сервису">Регламенты по сервису</option>
+							<option value="Регламенты по картам">Регламенты по картам</option>
+							<option value="Регламенты по работе с магазинами">Регламенты по работе с магазинами</option>
+						</select>
+					</div>
+			<div class="business_type">
+				<label for="business_type">Тип бизнеса</label>
+				<select id="business_type" name="business_type" <% if(paDoc.is_regulations == true) { %>disabled="true"<%}%>>
+					<option selected="selected" value="<%=paDoc.business_type%>"><%=paDoc.business_type%></option>
+					<option value="Национальные акции">Национальные акции</option>
+					<option value="Отдел СЕ">Отдел СЕ</option>
+					<option value="Отдел РЕ">Отдел РЕ</option>
+					<option value="Отдел КБТ">Отдел КБТ</option>
+					<option value="Отдел МБТ">Отдел МБТ</option>
+					<option value="Отдел АКС">Отдел АКС</option>
+					<option value="Отдел HiTechnic">Отдел HiTechnic</option>
+				</select>
+			</div>
+			<div class="descriptionInput">
+				<label for="description">Краткое описание акции: </label><br>
+				<textarea id="description" name="description" class="descriptionTextarea" rows="5"><%=HtmlToPlainText(paDoc.description); %></textarea>
+			</div>
+			<div class="fileInput">
+				<label for="fileInput">Добавить файл с приказом: </label>
+				<input type="file" id="fileInput" name="fileInput">
+			</div>
+			<div class="inputDiv">
+				<label for="internet">Интернет-магазин</label>
+				<select id="internet" name="internet" required="required" >
+					<option selected="selected" value="<%=paDoc.internet%>"><%=paDoc.internet%></option>
+					<option value="Участвует">Участвует</option>
+					<option value="Не участвует">Не участвует</option>
+				</select>
+			</div>
+			<div class="saveButton">
+				<input type="hidden" name="id" id="id" value="<%=paID%>" />
+				<!--<button class="btn btn-primary save-btn" onclick="saveFormBtn()">Сохранить</button> -->
+				<button type="submit" class="btn btn-primary save-btn">Сохранить</button>
+			</div>
+<!-- 			<div class="blockAttributes">
+				<p><strong>Блок признаков</strong></p>
+				<div class="isEnded">
+					<label>
+				      <input type="checkbox" id="ended" name="ended" <% if(paDoc.is_ended == true) { %>checked="checked" <%}%>value="isEnded" /> Закончена
+				    </label>
+				</div>
+				<div class="isNew">
+					<label>
+				      <input type="checkbox" id="n" name="n" <% if(paDoc.is_new == true) { %>checked="checked" <%}%>value="isNew" /> Новая
+				    </label>							
+				</div>
+				<div class="isActual">
+					<label>
+				      <input type="checkbox" id="actual" name="actual" <% if(paDoc.is_actual == true) { %>checked="checked" <%}%>value="isActual" /> Актуальная
+				    </label>
+				</div>
+			</div> -->
+			
+		</form>
+	</div>
+</div>

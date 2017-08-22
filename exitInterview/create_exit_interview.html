@@ -1,0 +1,157 @@
+<%
+	var adminGroup	= tools_web.get_web_param(curParams, 'adminAccess', '', true);
+	var _curUserId = curUser.id;
+	// var _curUserId = 6418423591595233204;
+	// var _curUserId = 6434432422125638258; // Береснев
+	var isAdmin = false;
+	var _userDoc = OpenDoc(UrlFromDocID(_curUserId));
+
+	// получаем список сотрудников в группах для административного доступа и устанавливаем признак для доступа ко всем сотрудникам
+	var groups = XQuery("for $elem in groups where MatchSome($elem/id, "+adminGroup+") return $elem");
+	for(item in groups) {
+		colls = OpenDoc(UrlFromDocID(Int(item.id))).TopElem.collaborators;
+		for(collab in colls) {
+			if(collab.collaborator_id == _curUserId) {
+				isAdmin = true;
+				break;
+			}
+		}
+	}
+
+	// формирование списка подчиненных
+	if(!isAdmin) {
+		bossSubdivision = [];
+
+		// функция рекурсивно пробегает по все подчиненным подразделениям и возвращает массив со всеми вложенными подразделениями
+		function getSubdivision(subd) {
+			bossSubdivision.push(subd);
+			var childSub = XQuery("for $elem in subdivisions where $elem/parent_object_id=" + subd + " return $elem");
+
+			for(sub in childSub) {
+				getSubdivision(sub.id);
+			}
+		}
+
+		var shop = ArrayOptFirstElem(XQuery("for $elem in collaborators where $elem/id="+_curUserId+" return $elem"));
+		
+		getSubdivision(shop.position_parent_id);
+		bossSubdivision = ArrayMerge(bossSubdivision, 'This', ', ');
+
+		var users = XQuery("for $elem in collaborators where MatchSome($elem/position_parent_id, " + bossSubdivision + ") and $elem/fullname!='' and $elem/is_dismiss!=true() order by $elem/fullname return $elem");
+
+		// var boss = XQuery("for $elem in collaborators where $elem/position_parent_id="+shop.position_parent_id+" and $elem/is_dismiss!=true() and ForeignElem($elem/position_id)/is_boss=true() return $elem");
+
+	} else {
+		var users = XQuery("for $elem in collaborators where $elem/is_dismiss!=true() and MatchSome($elem/org_id, (5546589151215959133, 5723033113571181760)) and $elem/fullname!='' order by $elem/fullname return $elem");
+
+		// var boss = XQuery("for $elem in collaborators where $elem/is_dismiss!=true() and ForeignElem($elem/position_id)/is_boss=true() order by $elem/fullname return $elem");
+	}
+%>
+			
+
+<script type="text/javascript">
+	$(document).ready(function(e) {
+		$('ul.rebs-list li').click(function() {
+			var default_status_obj = $('div.rebs-view-default');
+			var content_obj = $('div.rebs-view');
+			var id = $(this).data('paid');
+
+			content_obj.hide();
+			default_status_obj.html('Загрузка..').show();
+			$.ajax({
+				type:"POST",
+				url:"custom_web_template.html?object_id=6452247614219384798",
+				data: "id=" + id,
+				success: function(request) {
+					default_status_obj.hide();
+					content_obj.html(request).fadeIn(200);
+					window.scroll(0,0); 
+				}
+			});
+		});
+
+		$('div.rebs-list-search > input').click(function(e) {
+		if($(this).val() == 'Найти..') $(this).val('')
+	}).blur(function(e) {
+		if($(this).val() == '') $(this).val('Найти..')
+	}).keyup(searchRebuke);
+	$('div.rebs-list-search > form > label > input').change(function(e) {
+		$('input#personal_value').val($(this).val());
+		searchRebuke();
+	});
+	
+	function searchRebuke()
+	{
+		var null_result_obj = $('ul.rebs-list li#null_li');
+		var posit_filter = $('input#personal_value').val();
+		var search_str   = $('div.rebs-list-search > input').val();
+		search_str = (search_str == 'Найти..') ? '' : search_str.toLowerCase();
+		if(!posit_filter && !search_str)
+		{
+			$('ul.rebs-list li').show();
+			null_result_obj.hide();
+			return;
+		}
+
+		$('ul.rebs-list li').hide();
+		var is_good = false;
+		$('ul.rebs-list li').each(function(index, element) {
+			if($(element).children().size() > 0)
+			{
+				var name  = $(element).children('h6').text().toLowerCase();
+				// var posit = $(element).data('position').toLowerCase();
+				if( (!search_str || (search_str && ~name.indexOf(search_str))) && (!posit_filter || (posit_filter && ~posit.indexOf(posit_filter))) )
+				{
+					$(element).show();
+					is_good = true;
+				}
+			}
+		});
+		if(!is_good) null_result_obj.show();
+	}
+	});
+
+	
+</script>
+
+<div class="customBlock">
+<div class="customLeft">
+<span class="customLeft-Head">Выбрать форму</span>
+<div class="customLeft-Body rebs-my-left-body">
+
+	<div class="rebs-list-search">
+		<input type="text" value="Найти.."/>
+		<form name="personal_search">
+			<input type="hidden" id="personal_value">
+		</form>
+
+	</div>
+	<ul class="rebs-list">
+		<li id="null_li">Ничего не найдено</li>
+		<%
+		var li_html = { def: '<span class="rebs-count-def">&bull;</span>', act: '<span class="rebs-count-act">&bull;</span>' };
+
+		for(r in users)
+		{
+			%>
+			<li data-paid="id_<%=r.id;%>">
+				<h6><%=r.fullname;%></h6>
+				<u class="info"><%=r.position_parent_name;%> | <%=r.position_name;%></u>
+			</li>
+			<%
+		}
+		%>
+	</ul>
+</div>
+</div>
+<div class="customRight">
+<div class="customBody-content">
+<div class="customBody-head">Exit Interview</div>
+<div class="rebs-view-default">Выберите нужного сотрудника.</div>
+<div class="rebs-view"></div>
+
+</div>
+</div>
+</div>
+<div class="customClear"></div>
+</div>

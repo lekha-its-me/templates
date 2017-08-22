@@ -1,0 +1,77 @@
+<script>
+	function showReport(){
+		var month_from = $('.month_from').val();
+		var month_to = $('.month_to').val();
+		var table = '<table class="table table-hover resultTable"><thead id="head"><tr class="head"><th>ФИО</th></tr></thead><tbody id="body"></tbody></table>'
+		/*$('.resultTable').hide();*/
+		$('.resultTable').empty();
+		$('.resultTable').html(table);
+		$('.defaultMessage').html('Загрузка...').show();
+		$.ajax({
+				type:"POST",
+				url: "custom_web_template.html?object_id=6449308126156042703",
+				data: 'date_from=' + month_from + '&date_to=' + month_to,
+				error: function(err) { alert("error ajax: "+err); },
+				success: function(resp)
+				{
+					var data = jQuery.parseJSON(resp);
+
+					$('.defaultMessage').hide();
+					/*$('.resultTable').show();*/
+					
+					for(item in data) {
+						
+
+						// $('#body').append('<tr><td>'+data[item].person+'</td><td>'+data[item].overall+'</td></tr>');
+
+						$('#body').append('<tr class='+data[item].id+'></tr>');
+						$('.'+data[item].id).append('<td>'+data[item].person+'</td>');
+						for(mark in data[item].marks) {
+							$('.head').append('<th>'+data[item].marks[mark].month+'</th>');
+							$('.'+data[item].id).append('<td class='+mark+'>'+data[item].marks[mark].overall+'<td>');
+						}
+					}
+				}
+			});
+	}
+
+	function open_in_excel_get(data_string){
+			data_string = $('.resultTable').html();
+			$.ajax({
+				type:"POST",
+				url: "custom_web_template.html?object_id=6449294203009509668",
+				data: 'operator=' + data_string,
+				error: function(err) { alert("error ajax: "+err); },
+				success: function(resp)
+				{
+					location.href = 'assessment_excel_export.html';
+				}
+			});
+		}
+</script>
+
+<div class="inputZone">
+	<div class="form-group">
+		<label for="month">Месяц начала</label>
+		<input type="month" class="month_from" name="month_from" id="month_from">
+		<label for="month">Месяц окончания</label>
+		<input type="month" class="month_to" name="month_to" id="month_to">
+		<button class="btn btn-default" onclick="showReport()">Показать отчет</button>
+	</div>
+</div>
+<div class="defaultMessage"></div>
+<div class="reportZone">
+	<table class="table table-hover resultTable">
+		<thead id="head"><tr class="head"><th>ФИО</th></tr></thead>
+		<tbody id="body">
+
+		</tbody>
+	</table>
+	<input type="button" class="btn btn-default" value="Экспорт в Excel" onclick="exportToExcel()">
+</div>
+
+<script>
+	function exportToExcel(){
+			open_in_excel_get($('.resultTable').html());
+		}
+</script>

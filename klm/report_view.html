@@ -1,0 +1,123 @@
+<%
+	var apprId = Int(StrReplace(Request.Form.id, 'id_', ''));
+	var data = [];
+	var pas = XQuery("for $elem in pas where $elem/assessment_appraise_id="+apprId+" order by ForeignElem($elem/person_id)/fullname return $elem");
+	var pasArray = [];
+	var markArray = [];
+	var collabArray = [];
+	var sumMarks = 0;
+	var countMarks = 0;
+	var average = 0;
+	var overall = 0;
+	var totalOverall = 0;
+	var count = 0; // для подсчета количества проходов в цикле при подсчете итоговой оценки
+
+	var competenceProfile = OpenDoc(UrlFromDocID(apprId)).TopElem.participants.Child(0).assessment_appraise_types.Child(0).competence_profile_id;
+
+	var collabs = ArrayExtractKeys(OpenDoc(UrlFromDocID(apprId)).TopElem.auditorys, 'person_id');
+	var comps = ArrayExtractKeys(OpenDoc(UrlFromDocID(competenceProfile)).TopElem.competences, 'competence_id');
+
+	var fullname = '';
+	var comp_name = '';
+	
+	for(collab in collabs) {
+		pasArray = XQuery("for $elem in pas where $elem/assessment_appraise_id="+apprId+" and $elem/person_id="+Int(collab)+" return $elem");
+		fullname = OpenDoc(UrlFromDocID(collab)).TopElem.fullname;
+
+		for(comp in comps) {
+			for(pa in pasArray) {
+				_doc = OpenDoc(UrlFromDocID(pa.id));
+
+				for(competence in _doc.TopElem.competences) {
+					
+					if(competence.competence_id == comp) {
+						comp_name = OpenDoc(UrlFromDocID(competence.competence_id)).TopElem.name;
+						if(competence.mark != 'N') {
+							sumMarks+=Real(competence.mark_value);
+							countMarks++;
+
+							if(sumMarks!=0){
+								average = Real(sumMarks/countMarks);
+								average = Real(Math.round(average*100))/100;
+							}
+						}
+					}
+				}
+				if(count < ArrayCount(pasArray)) {
+					overall+=Real(_doc.TopElem.overall);
+					// alert(overall);
+				}
+
+				count++;
+			}
+			markArray.push({id: String(comp), competence: String(comp_name), sumMarks: String(sumMarks), countMarks: String(countMarks), average: String(average)});
+			sumMarks = 0;
+			countMarks = 0;
+			average = 0;
+			comp_name = '';
+		}
+		try{
+			totalOverall = overall / ArrayCount(pasArray);
+			totalOverall = Real(Math.round(totalOverall*100))/100;
+		}
+		catch(e) {
+			throw Response.Write('<div class="alert alert-danger alert-dismissible fade in"><p class="messageText">Ошибка при формировании отчета</p></div>');
+		}
+		collabArray.push({id: String(collab), person: String(fullname), overall: String(totalOverall), marks: markArray});
+		markArray = [];
+		totalOverall = 0;
+		overall = 0;
+		count = 0;
+	}
+	obj = tools.object_to_text(collabArray, 'json');
+	// alert(obj);
+%>
+<script>
+	$(document).ready(function(e) {
+		<%
+		for(c in comps) {
+			%>
+				$('#collaborator').append('<tr class="table-competence" id="<%=c%>"><td><%=OpenDoc(UrlFromDocID(c)).TopElem.competence_block_id.ForeignElem.name%></td><td><%=OpenDoc(UrlFromDocID(c)).TopElem.name%></td></tr>');
+			<%
+		}
+		for(collab in collabArray) {%>
+			$('#head').append('<th id="<%=collab.id%>"><%=collab.person%></th>');
+			<%for(comp in collab.marks) {%>
+				$('#name').append('<tr><td><%=comp.competence%></td></tr>');
+				$('#<%=comp.id%>').append('<td><%=comp.average%></td>');
+			<%}%>
+			$('#overall').append('<td><%=collab.overall%></td>');<%
+		}
+		%>
+
+		
+	});
+
+	function open_in_excel_get(data_string){
+			data_string = $('#dataTable').html();
+			$.ajax({
+				type:"POST",
+				url: "custom_web_template.html?object_id=6449294203009509668",
+				data: 'data=' + data_string,
+				error: function(err) { alert("error ajax: "+err); },
+				success: function(resp)
+				{
+					location.href = 'assessment_excel_export.html';
+				}
+			});
+		}
+</script>
+
+<table class="table table-hover" id="dataTable">
+<thead><tr id="head"><th class="comp-block">Блок компетенций</th><th class="table-competence">Компетенция</th></tr></thead>
+<tbody id="collaborator">
+<tr id="overall"><td></td><td>Средний балл</td></tr>
+</tbody>
+
+</table>
+<input type="button" class="btn btn-default" value="Экспорт в Excel" onclick="exportToExcel()">
+<script>
+	function exportToExcel(){
+			open_in_excel_get($('#dataTable').html());
+		}
+</script>

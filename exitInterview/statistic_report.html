@@ -1,0 +1,684 @@
+<script>
+	// переменные для хранения ответов и сумм
+	var question_1_1 = 0;
+	var question_1_2 = 0;
+	var question_1_3 = 0;
+	var question_1_4 = 0;
+	var question_2_1 = 0;
+	var question_2_2 = 0;
+	var question_2_3 = 0;
+	var question_2_4 = 0;
+	var question_2_5 = 0;
+	var question_2_6 = 0;
+	var question_2_7 = 0;
+	var question_3_1 = 0;
+	var question_3_2 = 0;
+	var question_3_3 = 0;
+	var question_3_4 = 0;
+	var question_3_5 = 0;
+	var question_3_6 = 0;
+	var question_3_7 = 0;
+	var question_3_8 = 0;
+	var question_3_9 = 0;
+	var question_4_1 = 0;
+	var question_4_2 = 0;
+	var question_4_3 = 0;
+	var question_4_4 = 0;
+	var question_4_5 = 0;
+	var question_4_6 = 0;
+	var question_4_7 = 0;
+	var question_4_8 = 0;
+	var question_4_9 = 0;
+	var question_4_10 = 0;
+	var question_4_11 = 0;
+	var question_4_12 = 0;
+	var question_5_1 = 0;
+	var question_5_2 = 0;
+	var question_5_3 = 0;
+	var question_5_4 = 0;
+	var question_6_1 = 0;
+	var question_6_2 = 0;
+	var question_6_3 = 0;
+	var question_7_1 = 0;
+	var question_7_2 = 0;
+	var question_7_3 = 0;
+	var question_7_4 = 0;
+	var question_8_1 = 0;
+	var question_8_2 = 0;
+	var question_8_3 = 0;
+	var question_8_4 = 0;
+	var question_8_5 = 0;
+	var question_9_1 = 0;
+	var question_9_2 = 0;
+	var question_9_3 = 0;
+	var question_10_1 = 0;
+	var question_10_2 = 0;
+	var question_10_3 = 0;
+	var question_11_1 = 0;
+	var question_11_2 = 0;
+
+	var question_1_count = 0;
+	var question_2_count = 0;
+	var question_3_count = 0;
+	var question_4_count = 0;
+	var question_5_count = 0;
+	var question_6_count = 0;
+	var question_7_count = 0;
+	var question_8_count = 0;
+	var question_9_count = 0;
+	var question_10_count = 0;
+	var question_11_count = 0;
+
+	function open_in_excel_get(data_string){
+			data_string = $('.tableData').html();
+			$.ajax({
+				type:"POST",
+				url: "custom_web_template.html?object_id=6449294203009509668",
+				data: 'exit_data=' + data_string,
+				error: function(err) { alert("error ajax: "+err); },
+				success: function(resp)
+				{
+					location.href = 'assessment_excel_export.html';
+				}
+			});
+		}
+		$(document).ready(function(){
+			// функция показывает выбор дат
+			$('#showFilter').click(function(){
+				$('.fillForm').fadeIn(500);
+			});
+		});
+	
+</script>
+<%
+	if(Request.Form.HasProperty('date_from')){
+		var date_from = Request.Form.date_from;
+		var date_to = Request.Form.date_to;
+		var forms = XQuery("for $elem in cc_exitinterview_collabs where ForeignElem($elem/exit_interview_result)/dismiss_date>='"+date_from+"' and ForeignElem($elem/exit_interview_result)/dismiss_date<='"+date_to+"' and ForeignElem($elem/exit_interview_result)/is_done=true() return $elem");
+		var hrForms = XQuery("for $elem in cc_exitinterview_hrs where ForeignElem($elem/exit_interview_result)/dismiss_date>='"+date_from+"' and ForeignElem($elem/exit_interview_result)/dismiss_date<='"+date_to+"' and ForeignElem($elem/exit_interview_result)/is_done=true() return $elem");
+	} else {
+		var forms = [];
+		var hrForms = [];
+	}
+
+	for(item in forms){
+		%>
+			<script>
+			question_2 = '<%=item.question_2%>';
+			question_2 = question_2.split(';');
+
+			question_3 = '<%=item.question_3%>';
+			question_3 = question_3.split(';');
+
+			question_4 = '<%=item.question_4%>';
+			question_4 = question_4.split(';');
+
+			// все свитч-кейсы считают количество ответов по формам
+			switch('<%=item.question_1%>'){
+				case 'До 1 года' :
+					question_1_1++;
+					break;
+				case 'От 1 года до 3 лет' :
+					question_1_2++;
+					break;
+				case 'Больше 5 лет' :
+					question_1_3++;
+					break;
+				case 'Больше 10 лет' :
+					question_1_4++;
+					break;
+			}
+
+			for(r in question_2){
+				if(question_2[r]!=''){
+					switch(question_2[r]){
+					case 'Возможность применения своих профессиональных навыков' :
+						question_2_1++;
+						break;
+					case 'Постоянное профессиональное развитие' :
+						question_2_2++;
+						break;
+					case 'Амбициозные задачи и проекты' :
+						question_2_3++;
+						break;
+					case 'Коммуникация с коллегами / клиентами' :
+						question_2_4++;
+						break;
+					case 'Финансовая мотивация' :
+						question_2_5++;
+						break;
+					case 'График работы' :
+						question_2_6++;
+						break;
+					case 'Свой вариант' :
+						question_2_7++;
+						break;
+					}
+				}
+			}
+
+			for(r in question_3){
+				if(question_3[r]!=''){
+					switch(question_3[r]){
+					case 'Плохое оборудование рабочего места' :
+						question_3_1++;
+						break;
+					case 'Устаревшее оборудование' :
+						question_3_2++;
+						break;
+					case 'Устаревшая мебель и дизайн помещения' :
+						question_3_3++;
+						break;
+					case 'Несвоевременное подключение к электронным системам Компании (согласно функционала)' :
+						question_3_4++;
+						break;
+					case 'Плохое состояние здания' :
+						question_3_5++;
+						break;
+					case 'Плохие бытовые помещения и их санитарное состояние' :
+						question_3_6++;
+						break;
+					case 'Некачественная форма и / или несвоевременно выдана' :
+						question_3_7++;
+						break;
+					case 'Тяжелые условия труда (шум, грязь, темно, жарко, и т.д.)' :
+						question_3_8++;
+						break;
+					case 'Свой вариант' :
+						question_3_9++;
+						break;
+					}
+				}
+			}
+
+			for(r in question_4){
+				if(question_4[r]!=''){
+					switch(question_4[r]){
+					case 'Желание сменить сферу деятельности' :
+						question_4_1++;
+						break;
+					case 'Неудовлетворительный уровень заработной платы' :
+						question_4_2++;
+						break;
+					case 'Лучшее предложение по работе' :
+						question_4_3++;
+						break;
+					case 'Чрезмерная загруженность' :
+						question_4_4++;
+						break;
+					case 'Отсутствие условий для профессионального роста' :
+						question_4_5++;
+						break;
+					case 'Конфликт с руководством' :
+						question_4_6++;
+						break;
+					case 'Смена места жительства' :
+						question_4_7++;
+						break;
+					case 'По состоянию здоровья' :
+						question_4_8++;
+						break;
+					case 'По семейным обстоятельствам' :
+						question_4_9++;
+						break;
+					case 'Невозможность в полной мере реализовать свои знания, опыт и навыки' :
+						question_4_10++;
+						break;
+					case 'Сокращение' :
+						question_4_11++;
+						break;
+					case 'Свой вариант' :
+						question_4_12++;
+						break;
+					}
+				}
+			}
+			switch('<%=item.question_5%>'){
+				case 'Здоровая и дружественная, проводим вместе рабочее и личное время' :
+					question_5_1++;
+					break;
+				case 'Рабочая и конструктивная, обсуждаем рабочие вопросы и рабочее время' :
+					question_5_2++;
+					break;
+				case 'Не общаемся, рабочие вопросы решаем по электронной почте' :
+					question_5_3++;
+					break;
+				case 'Неблагоприятная, все коллеги находятся в состоянии постоянного стресса' :
+					question_5_4++;
+					break;
+			}
+			switch('<%=item.question_6%>'){
+				case 'Отличные - планируем и дальше продолжать общение вне работы' :
+					question_6_1++;
+					break;
+				case 'Нормальные - общались исключительно по рабочим вопросам' :
+					question_6_2++;
+					break;
+				case 'Негативные - не поддерживали никаких взаимоотношений' :
+					question_6_3++;
+					break;
+			}
+			switch('<%=item.question_7%>'){
+				case 'Отличные - руководитель оказывал помощь в рабочих вопросах, не возникало конфликтных ситуация' :
+					question_7_1++;
+					break;
+				case 'Нормальные - руководитель оказывал помощь в рабочих вопросах, периодически возникали спорные ситуации' :
+					question_7_2++;
+					break;
+				case 'Нейтральные - общались только при наличии рабочих вопросов' :
+					question_7_3++;
+					break;
+				case 'Негативные - не получалось найти общий язык' :
+					question_7_4++;
+					break;
+			}
+			switch('<%=item.question_8%>'){
+				case 'Посещение внутренних мастер-классов и семинаров' :
+					question_8_1++;
+					break;
+				case 'Посещение внешних мастер-классов и тренингов' :
+					question_8_2++;
+					break;
+				case 'Посещение конференций/ бизнес-встреч' :
+					question_8_3++;
+					break;
+				case 'Я не знал(а) о возможности посещения обучающих мероприятий' :
+					question_8_4++;
+					break;
+				case 'Мне отказывали в возможности посещения обучающих мероприятий' :
+					question_8_5++;
+					break;
+			}
+			switch('<%=item.question_9%>'){
+				case 'Да, с радостью' :
+					question_9_1++;
+					break;
+				case 'Возможно, в зависимости от предлагаемой вакансии' :
+					question_9_2++;
+					break;
+				case 'Нет, не буду' :
+					question_9_3++;
+					break;
+			}
+			switch('<%=item.question_10%>'){
+				case 'Да, с радостью' :
+					question_10_1++;
+					break;
+				case 'Возможно, не уверен(а)' :
+					question_10_2++;
+					break;
+				case 'Нет, не буду' :
+					question_10_3++;
+					break;
+			}
+			
+			</script>
+		<%
+	}
+
+	for(f in hrForms){
+	%>
+	<script>
+		switch('<%=f.question_1%>'){
+			case 'По собственной инициативе' :
+				question_11_1++;
+				break;
+			case 'По инициативе Компании' :
+				question_11_2++;
+				break;
+			}
+	</script>
+	<%
+	}
+	
+%>
+
+<button class="btn btn-default" id="showFilter">Показать фильтр</button>
+<div class="fillForm" style="width: 30%;display: none;">
+	<form name="searchForm" method="POST">
+		<div class="form-group">
+			<label for="date_from">Дата с: </label>
+			<input class="form-control" type="date" id="date_from" name="date_from" />
+		</div>
+		<div class="form-group">
+			<label for="date_to">Дата по: </label>
+			<input class="form-control" type="date" id="date_to" name="date_to" />
+		</div>
+		<button class="btn btn-default" type="submit">Показать</button>
+	</form>
+</div>
+<table class="table table-hover tableData">
+	<thead>
+		<th>Вопрос</th>
+		<th>Ответы</th>
+		<th>Кол-во</th>
+		<th>%</th>
+	</thead>
+	<tbody>
+		<tr>
+			<td rowspan="4">Сколько лет Вы проработали в компании?</td>
+			<td>До 1 года</td>
+			<td id="question_1_1"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>От 1 года до 3 лет</td>
+			<td id="question_1_2"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Больше 5 лет</td>
+			<td id="question_1_3"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Больше 10 лет</td>
+			<td id="question_1_4"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td rowspan="7">Что Вам нравилось в занимаемой должности? (выберите не более 3-х вариантов)?</td>
+			<td>Возможность применения своих профессиональных навыков</td>
+			<td id="question_2_1"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Постоянное профессиональное развитие</td>
+			<td id="question_2_2"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Амбициозные задачи и проекты</td>
+			<td id="question_2_3"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Коммуникация с коллегами / клиентами</td>
+			<td id="question_2_4"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Финансовая мотивация</td>
+			<td id="question_2_5"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>График работы</td>
+			<td id="question_2_6"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Свой вариант</td>
+			<td id="question_2_7"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td rowspan="9">Как вы оцениваете организацию рабочего места?</td>
+			<td>Плохое оборудование рабочего места</td>
+			<td id="question_3_1"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Устаревшее оборудование</td>
+			<td id="question_3_2"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Устаревшая мебель и дизайн помещения</td>
+			<td id="question_3_3"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Несвоевременное подключение к электронным системам Компании (согласно функционала)</td>
+			<td id="question_3_4"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Плохое состояние здания</td>
+			<td id="question_3_5"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Плохие бытовые помещения и их санитарное состояние</td>
+			<td id="question_3_6"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Некачественная форма и / или несвоевременно выдана</td>
+			<td id="question_3_7"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Тяжелые условия труда (шум, грязь, темно, жарко, и т.д.)</td>
+			<td id="question_3_8"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Свой вариант</td>
+			<td id="question_3_9"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td rowspan="12">Укажите, пожалуйста, истинные причины Вашего увольнения (выберите не более 3-ч вариантов)?</td>
+			<td>Желание сменить сферу деятельности</td>
+			<td id="question_4_1"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Неудовлетворительный уровень заработной платы</td>
+			<td id="question_4_2"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Лучшее предложение по работе</td>
+			<td id="question_4_3"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Чрезмерная загруженность</td>
+			<td id="question_4_4"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Отсутствие условий для профессионального роста</td>
+			<td id="question_4_5"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Конфликт с руководством</td>
+			<td id="question_4_6"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Смена места жительства</td>
+			<td id="question_4_7"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>По состоянию здоровья</td>
+			<td id="question_4_8"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>По семейным обстоятельствам</td>
+			<td id="question_4_9"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Невозможность в полной мере реализовать свои знания, опыт и навыки</td>
+			<td id="question_4_10"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Сокращение</td>
+			<td id="question_4_11"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Свой вариант</td>
+			<td id="question_4_12"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td rowspan="4">Какая обстановка существует внутри Вашего подразделения (департамента / отдела / магазина)?</td>
+			<td>Здоровая и дружественная, проводим вместе рабочее и личное время</td>
+			<td id="question_5_1"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Рабочая и конструктивная, обсуждаем рабочие вопросы и рабочее время</td>
+			<td id="question_5_2"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Не общаемся, рабочие вопросы решаем по электронной почте</td>
+			<td id="question_5_3"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Неблагоприятная, все коллеги находятся в состоянии постоянного стресса</td>
+			<td id="question_5_4"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td rowspan="3">Какие взаимоотношения у Вас складывались с коллегами?</td>
+			<td>Отличные - планируем и дальше продолжать общение вне работы</td>
+			<td id="question_6_1"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Нормальные - общались исключительно по рабочим вопросам</td>
+			<td id="question_6_2"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Негативные - не поддерживали никаких взаимоотношений</td>
+			<td id="question_6_3"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td rowspan="4">Какие взаимоотношения у Вас складывались с руководителем?</td>
+			<td>Отличные - руководитель оказывал помощь в рабочих вопросах, не возникало конфликтных ситуация</td>
+			<td id="question_7_1"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Нормальные - руководитель оказывал помощь в рабочих вопросах, периодически возникали спорные ситуации</td>
+			<td id="question_7_2"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Нейтральные - общались только при наличии рабочих вопросов</td>
+			<td id="question_7_3"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Негативные - не получалось найти общий язык</td>
+			<td id="question_7_4"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td rowspan="5">Какие условия были предоставлены Вам для повышения квалификации?</td>
+			<td>Посещение внутренних мастер-классов и семинаров</td>
+			<td id="question_8_1"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Посещение внешних мастер-классов и тренингов</td>
+			<td id="question_8_2"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Посещение конференций/ бизнес-встреч</td>
+			<td id="question_8_3"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Я не знал(а) о возможности посещения обучающих мероприятий</td>
+			<td id="question_8_4"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Мне отказывали в возможности посещения обучающих мероприятий</td>
+			<td id="question_8_5"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td rowspan="3">Будете ли Вы в дальнейшем рассматривать предложение по работе от компании Eldorado?</td>
+			<td>Да, с радостью</td>
+			<td id="question_9_1"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Возможно, в зависимости от предлагаемой вакансии</td>
+			<td id="question_9_2"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Нет, не буду</td>
+			<td id="question_9_3"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td rowspan="3">Будете ли Вы рекомендовать компанию Eldorado, как работодателя своим друзьям/ знакомым?</td>
+			<td>Да, с радостью</td>
+			<td id="question_10_1"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Возможно, не уверен(а)</td>
+			<td id="question_10_2"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Нет, не буду</td>
+			<td id="question_10_3"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td rowspan="2">По чьей инициативе сотрудник покинул Компанию?</td>
+			<td>По собственной инициативе</td>
+			<td id="question_11_1"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>По инициативе Компании</td>
+			<td id="question_11_2"></td>
+			<td></td>
+		</tr>
+	</tbody>
+</table>
+<button class="btn btn-default" onclick="exportToExcel()">Экспорт в Excel</button>
+<script>
+	// счет сумм по ответам
+	question_1_count = question_1_1+question_1_2+question_1_3+question_1_4;
+	question_2_count = question_2_1+question_2_2+question_2_3+question_2_4+question_2_5+question_2_6+question_2_7;
+	question_3_count = question_3_1+question_3_2+question_3_3+question_3_4+question_3_5+question_3_6+question_3_7+question_3_8+question_3_9;
+	question_4_count = question_4_1+question_4_2+question_4_3+question_4_4+question_4_5+question_4_6+question_4_7+question_4_8+question_4_9+question_4_10+question_4_11+question_4_12;
+	question_5_count = question_5_1+question_5_2+question_5_3+question_5_4;
+	question_6_count = question_6_1+question_6_2+question_6_3;
+	question_7_count = question_7_1+question_7_2+question_7_3+question_7_4;
+	question_8_count = question_8_1+question_8_2+question_8_3+question_8_4+question_8_5;
+	question_9_count = question_9_1+question_9_2+question_9_3;
+	question_10_count = question_10_1+question_10_2+question_10_3;
+	question_11_count = question_11_1+question_11_2;
+
+	// заполнение значений в таблице
+	for(var i = 1; i <= 11; i++){
+		total=0;
+		$('[id ^= "question_'+i+'_"]').each(function(){
+			current = eval($(this).attr('id'));
+			$(this).text(current);
+			total = eval('question_'+i+'_count');
+			percent = (parseInt(current)/parseInt(total))*100;
+			if(isNaN(percent)){
+				percent=0;
+			}
+			$(this).next().text(percent);
+		});
+	}
+
+	function exportToExcel(){
+			open_in_excel_get($('.tableData').html());
+		}
+</script>

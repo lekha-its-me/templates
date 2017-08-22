@@ -1,0 +1,89 @@
+<%
+	var paID = Int(StrReplace(Request.Form.id, 'id_', ''));
+	// var pas = XQuery("for $elem in pas where $elem/assessment_appraise_id="+paID+" order by ForeignElem($elem/person_id)/fullname return $elem");
+	var collab = ArraySelectDistinct(XQuery("for $elem in pas where $elem/assessment_appraise_id="+paID+" order by ForeignElem($elem/person_id)/fullname return $elem"), 'person_id');
+%>
+<script type="text/javascript">
+	$('.addUser').click(function() {
+			var default_status_obj = $('div.rebs-view-default');
+			var content_obj = $('div.main-bar');
+
+			var id = <%=StrReplace(Request.Form.id, 'id_', '')%>;
+			
+			content_obj.hide();
+			default_status_obj.html('Загрузка..').show();
+			$.ajax({
+				type:"POST",
+				data: "id=" + id,
+				url:"custom_web_template.html?object_id=6444404789483412647",
+				success: function(request) {
+					default_status_obj.hide();
+					content_obj.html(request).fadeIn(200);
+					$('#appraise_id').val('<%=Request.Form.id%>');
+					window.scroll(0,0); 
+				}
+			});
+		});
+
+	$('.fillForm').click(function() {
+			var default_status_obj = $('div.rebs-view-default');
+			var content_obj = $('div.main-bar');
+			// var appraise_id = $(this).data('appraise');
+			var pa_id = $(this).data('id');
+			
+			var id = <%=StrReplace(Request.Form.id, 'id_', '')%>;
+			
+			content_obj.hide();
+			default_status_obj.html('Загрузка..').show();
+			$.ajax({
+				type:"POST",
+				data: "pa_id=" + pa_id,
+				url:"custom_web_template.html?object_id=6444438252606196029",
+				// url:"custom_web_template.html?object_id=5667777799290362496",
+				success: function(request) {
+					$(this).css('color', 'red');
+					default_status_obj.hide();
+					content_obj.html(request).fadeIn(200);
+					window.scroll(0,0); 
+				}
+			});
+		});
+	
+</script>
+<div class="main-bar">
+	
+</div>
+
+<div class="right-bar">
+	<div class="button-block">
+		<button class="btn btn-primary addUser">Добавить сотрудника</button>
+	</div>
+	<h3>Созданные КЛН в этой оценке</h3>
+		<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+		<%
+			for(item in collab){
+				coll = OpenDoc(UrlFromDocID(Int(item.person_id)));
+				paDoc = XQuery("for $elem in pas where $elem/assessment_appraise_id="+paID+" and $elem/person_id="+item.person_id+" return $elem");
+				%><div class="panel panel-default">
+					    <div class="panel-heading" role="tab" id="headingOne">
+					      <h6 class="panel-title"><span class="badge pull-right"><%=ArrayCount(paDoc)%></span>
+					        <a role="button" data-toggle="collapse" data-parent="#accordion" href="#<%=coll.TopElem.id%>" aria-expanded="true" aria-controls="<%=coll.TopElem.id%>"><%=coll.TopElem.fullname%></a>
+					      </h6>
+					    </div>
+					    <div id="<%=coll.TopElem.id%>" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
+					      <div class="panel-body">
+					      	<ul id="userList">
+						        <%
+						        	for(pa in paDoc) {
+						        		_doc = OpenDoc(UrlFromDocID(Int(pa.id)));
+						        		%><li class='fillForm' data-appraise='<%=paID%>' data-id='<%=pa.id%>'><%=StrDate(Date(_doc.TopElem.custom_elems.ObtainChildByKey("dateOfCall").value), false, false)%> - <%=_doc.TopElem.custom_elems.ObtainChildByKey("clientPhone").value%> - <span class="badge alert-success"><%=_doc.TopElem.overall%></span></li><%
+						        	}
+						        %>
+					        </ul>
+					      </div>
+					    </div>
+					  </div><%
+			}
+		%>
+		</div>
+</div>

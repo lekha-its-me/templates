@@ -1,0 +1,314 @@
+<%
+	// функция расчета итогового балла в анкете
+	function countOverall(pa_id) {
+		var countScore = 0;
+		var sumWeightScore = 0;
+		var maxScore = 0;
+		var sumScore = 0;
+		var countNScore = 0;
+		var result = 0;
+
+		paDOC = OpenDoc(UrlFromDocID(Int(pa_id)));
+		for(comp in paDOC.TopElem.competences) {
+			if(comp.mark != 'N') {
+				sumScore += Int(comp.mark_value);
+				sumWeightScore += Int(comp.mark_value) * (comp.weight / 100);
+				maxScore += 100 * (comp.weight / 100);
+			} else {
+				countNScore++;
+			}
+		}
+		// alert(sumWeightScore);
+		// alert(maxScore);
+		// alert(result);
+		// alert(countNScore);
+		result = (sumWeightScore/maxScore)*100;
+		return result;
+	}
+
+	if(Request.Form.HasProperty('date')&& Request.Form.HasProperty('group'))
+	{
+		try{
+			var date = Request.Form.date;
+			var group = Request.Form.group;
+			var ident = 'kln_' + date + ' ' + group;
+
+			var input_profile = tools_web.get_web_param(curParams, 'input', '', true);
+			var ouput_profile = tools_web.get_web_param(curParams, 'output', '', true);
+			var eiss_profile = tools_web.get_web_param(curParams, 'eiss', '', true);
+			var credit_profile = tools_web.get_web_param(curParams, 'credit', '', true);
+			var nps_profile = tools_web.get_web_param(curParams, 'nps', '', true);
+			
+			// ищем в базе процедуру оценки с указанными данными
+			var curAppr = ArrayOptFirstElem(XQuery("for $elem in assessment_appraises where $elem/code='"+ident+"' and $elem/name='"+ident+"' return $elem"));
+
+			if(curAppr!= undefined) {
+				var doc = curAppr;
+			} else {
+				var doc = OpenNewDoc('x-local://wtv/wtv_assessment_appraise.xmd');
+				doc.BindToDb();
+				doc.TopElem.name = date + ' ' + group;
+				doc.TopElem.code = 'kln_' + date + ' ' + group;
+				doc.TopElem.workflow_id = 6442249812667744083;
+				doc.TopElem.start_date = Date(date + '-01');
+
+				part = doc.TopElem.participants.AddChild();
+				part.participant_id = 'expert';
+
+				parametrs = part.parameters.AddChild();
+				parametrs.parameter_id = 'Nchecked';
+
+				type = part.assessment_appraise_types.AddChild();
+				type.assessment_appraise_type_id = 'competence_appraisal';
+
+				if(group == 'Входящая') {
+					type.competence_profile_id = Int(input_profile);
+				}
+				if(group == 'Исходящая') {
+					type.competence_profile_id = Int(ouput_profile);
+				} 
+				if(group == 'ЕИСС') {
+					type.competence_profile_id = Int(eiss_profile);
+				}
+				if(group == 'Кредит') {
+					type.competence_profile_id = Int(credit_profile);
+				}
+				if(group == 'NPS') {
+					type.competence_profile_id = Int(nps_profile);
+				}
+
+				doc.Save();
+				curAppr = ArrayOptFirstElem(XQuery("for $elem in assessment_appraises where $elem/code='"+ident+"' and $elem/name='"+ident+"' return $elem"));
+			}
+		}
+	catch(e)
+		{
+			Response.Write(e);
+		}
+	}
+
+	if(Request.Form.HasProperty('user')&&Request.Form.HasProperty('supervisor')) {
+		try{
+			var user = Int(Request.Form.user);
+			var supervisor = Request.Form.supervisor;
+			var appraise_id = StrReplace(Request.Form.appraise_id, 'id_', '');
+			var data = '';
+			var array = XQuery("for $elem in pas where $elem/person_id="+user+" and $elem/assessment_appraise_id="+appraise_id+" return $elem");
+			var check = ArrayCount(array);
+			var error = false;
+
+			var super = ArraySelectDistinct(array, 'expert_person_id');
+			for(s in super) {
+				if(String(supervisor) != String(s.expert_person_id)) {
+					error = true;
+				}
+			}
+
+			if(error) {
+				Response.Write(1);
+			} else {
+				var curAppr = ArrayOptFirstElem(XQuery("for $elem in assessment_appraises where $elem/id="+appraise_id+" return $elem"));
+				tools.add_person_to_assessment_appraise(user, curAppr.id, null, null);
+				
+
+				var supervisorDoc = ArrayOptFirstElem(XQuery("for $elem in collaborators where $elem/id="+supervisor+" return $elem"));
+				var assDoc = OpenDoc(UrlFromDocID(Int(appraise_id)));
+
+				if(assDoc.TopElem.participants.Child(0).customize.experts.ChildExists('expert')){
+					var is_exist = false;
+					for(exp in assDoc.TopElem.participants.Child(0).customize.experts) {
+						if(String(supervisor) == String(exp.person_id)) {
+							is_exist = true;
+						}
+					}
+
+					if(is_exist) {
+						// Response.Write(0);
+					} else {
+						expert = assDoc.TopElem.participants.Child(0).customize.experts.AddChild();
+						expert.person_id = supervisor;
+						expert.person_fullname = supervisorDoc.fullname;
+						expert.person_position_name = supervisorDoc.position_name;
+						expert.role = supervisorDoc.position_name;
+						expert.responsible = 0;
+					}
+				} else {
+					expert = assDoc.TopElem.participants.Child(0).customize.experts.AddChild();
+					expert.person_id = supervisor;
+					expert.person_fullname = supervisorDoc.fullname;
+					expert.person_position_name = supervisorDoc.position_name;
+					expert.role = supervisorDoc.position_name;
+					expert.responsible = 0;
+				}
+
+				// type.custom_web_template_id = 6091554247853749044;
+
+				assDoc.Save();
+
+				// Генерация анкет для добавленных сотрудников
+				if(check==0) {
+					tools_ass.generate_assessment_plan(curAppr.id, false, true, false, undefined, undefined, null);
+				} else {
+					var doc = OpenNewDoc('x-local://wtv/wtv_pa.xmd');
+					doc.BindToDb();
+					doc.TopElem.person_id = user;
+					tools.common_filling( 'collaborator', doc.TopElem, doc.TopElem.person_id );
+
+
+					doc.TopElem.expert_person_id = supervisor
+					doc.TopElem.status = 'expert';
+					doc.TopElem.assessment_appraise_id = appraise_id;
+					doc.TopElem.assessment_appraise_type = 'competence_appraisal';
+					var comp_id = assDoc.TopElem.participants.Child(0).assessment_appraise_types.Child(0).competence_profile_id;
+					doc.TopElem.competence_profile_id = comp_id;
+					try{
+						doc.TopElem.competences.AssignElem(OpenDoc(UrlFromDocID(comp_id)).TopElem.competences);
+					}
+					catch(e)
+					{
+						alert(e);
+					}
+
+					doc.Save();
+				}
+
+				/////////////////////////////////////////////////////////////////////////////
+				// Костыль для удаления лишних анкет
+				var paToDel = XQuery("for $elem in pas where $elem/assessment_appraise_id="+curAppr.id+" and $elem/person_id="+user+" and $elem/expert_person_id!="+supervisor+" return $elem");
+				for(item in paToDel)
+				{
+					DeleteDoc(UrlFromDocID(item.id));
+				}
+				//////////////////////////////////////////////////////////////////////////////
+
+				var pa = ArrayOptFirstElem(XQuery("for $elem in pas where $elem/assessment_appraise_id="+curAppr.id+" and $elem/person_id="+user+" order by $elem/modification_date descending return $elem"));
+				
+				
+				data+=pa.id + '!!!';
+				data+=pa.person_fullname;
+				Response.Write(data);
+			}
+		}
+		catch(e) {
+			Response.Write(e);
+		}
+	}
+
+	if(Request.Form.HasProperty('competence')) {
+
+		try {
+			var id = Int(Request.Form.competence);
+
+			function getInfo(id) {
+				var data = [];
+				var scales = [];
+				
+				_doc = OpenDoc(UrlFromDocID(id)).TopElem;
+				for(scale in _doc.scales) {
+					scales.push({id: String(scale.id), name: String(scale.name), percent: String(scale.percent), desc: String(scale.desc)});
+				}
+
+				data.push({id: String(_doc.id), name: String(_doc.name), scales: scales, comp_block: String(_doc.competence_block_id), descr: String(_doc.comment)});
+				data = tools.object_to_text(data, 'json');
+				return data;
+			}
+
+			Response.Write(getInfo(id));
+		}
+		catch(e) {
+			Response.Write(e);
+		}
+	}
+
+	if(Request.Form.HasProperty('data')) {
+		try {
+			var data = Request.Form.data;
+			var date = Request.Form.date;
+			var phone = Request.Form.phone;
+			var link = Request.Form.link;
+			var comment = HtmlToPlainText(Request.Form.comment);
+			var id = Int(Request.Form.pa);
+			var mark_id = ''; 
+			var mark = ''; 
+			var comp_id = '';
+			var obj = {};
+			var array = [];
+
+			data = StrReplace(data, '[', '');
+			data = StrReplace(data, ']', '');
+			data = StrReplace(data, '},{', '};{');
+			arr = data.split(';');
+
+			try {
+				paDOC = OpenDoc(UrlFromDocID(id));
+				paDOC.TopElem.custom_elems.ObtainChildByKey("dateOfCall").value = date;
+				paDOC.TopElem.custom_elems.ObtainChildByKey("clientPhone").value = phone;
+				paDOC.TopElem.custom_elems.ObtainChildByKey("linkToRecord").value = link;
+				paDOC.TopElem.comment = comment;
+
+				for(comp in paDOC.TopElem.competences) {
+
+				for(item in arr) {
+					item = StrReplace(item, '{', '');
+					item = StrReplace(item, '}', '');
+
+					arr2 = item.split(',');
+					for(item in arr2) {
+						if(item.slice(1, 3) == 'id') {
+							mark_id = StrReplace(item.slice(6), '"', '');
+							// alert(mark_id);
+						}
+						if(item.slice(1, 5) == 'mark') {
+							mark = StrReplace(item.slice(8), '"', '');
+							// alert(mark);
+						}
+						if(item.slice(1, 11) == 'competence') {
+							comp_id = StrReplace(item.slice(14), '"', '');
+							// alert(competence_id);
+							if(Int(comp_id) == Int(comp.competence_id)) {
+							try{
+								comp.mark = String(mark_id);
+
+								if(mark == '100') {
+									comp.mark_text = 'Максимальный балл';
+								}
+								if(mark == '50') {
+									comp.mark_text = 'Промежуточный балл';
+								}
+								if(mark == '0') {
+									comp.mark_text = 'Минимальный балл';
+								}
+
+								if(mark != 'N') {
+									comp.mark_value = String(mark);
+								}
+								else {
+									comp.mark_text = 'N';
+								}
+								// alert(comp.mark);
+								// alert(comp.mark_value);
+								// alert(comp.mark_text);
+							}
+							catch(e)
+								alert(e);
+							}
+						}
+					}
+				}
+			}
+			paDOC.Save();
+
+			_DOC = OpenDoc(UrlFromDocID(id));
+			_DOC.TopElem.overall = countOverall(id);
+			_DOC.TopElem.is_done = true;
+			_DOC.Save();
+			}
+			catch(e) {
+				alert(e);
+			}
+		}
+		catch(e) {
+			Response.Write(e);
+		}
+	}
+%>	

@@ -1,0 +1,152 @@
+<link rel="stylesheet" type="text/css" href="/my_template/templates/promo/promoStyle.css">
+<%
+var save_url = tools_web.get_web_param(curParams, 'save_url', '', true);
+%>
+
+<script type="text/javascript">
+
+	function regulChange() {
+		if($("#isRegulations").attr("checked") == 'checked')
+		{
+			$('select#business_type').prop('disabled',true);
+			$('select#regulations_type').prop('disabled',false);
+		}
+		else 
+		{
+			$('select#business_type').prop('disabled',false);
+			$('select#regulations_type').prop('disabled',true);
+		}
+	}
+	//Сохранение формы акции
+	function saveFormBtn() {
+		/*var isEnded = false;
+		var isNew = false;
+		var isActual = false;
+
+		if($("#ended").attr("checked") == 'checked') 
+		{
+			isEnded = true;
+		}
+
+		if($("#new").attr("checked") == 'checked') 
+		{
+			isNew = true;	
+		}
+
+		if($("#actual").attr("checked") == 'checked') 
+		{
+			isActual = true;
+		}*/
+
+		var file = new FormData();
+		    file.append($('#fileInput')[0].files);
+
+		//var data_str = 'title=' + $('#title').val() + '&date_from=' + $('#date_from').val() + '&date_to=' + $('#date_to').val() + '&business_type=' + $('#business_type').val() + '&description=' + $('#description').val() + '&fileInput=' + $('#fileInput').val() + '&int=' + $('#internet').val() + '&isEnded=' + isEnded;
+
+		$.ajax({
+			type:"POST",
+			url: '<%=save_url;%>',
+			cache: false,
+			contentType: false,
+    		processData: false,
+			data: 'title=' + $('#title').val() + '&date_from=' + $('#date_from').val() + '&date_to=' + $('#date_to').val() + '&business_type=' + $('#business_type').val() + '&description=' + $('#description').val() + '&fileInput=' + $('#fileInput').val() + '&int=' + $('#internet').val() + /*'&ended=' + isEnded + '&n=' + isNew + '&a=' + isActual + */'&fileInput' + file,
+			error: function( err ) { alert( "error ajax: " + err ) },
+			success: function(resp){
+				alert(resp);
+			}
+		});
+	};
+</script>
+
+
+<div class="container-fluid">
+<div class="row">
+	<div class="panel panel-default">
+	<!-- Default panel contents -->
+		<div class="panel-heading">Добавление акции</div>
+			<div class="panel-body">
+				<form class="addForm" action="custom_web_template.html?object_id=6373930841575207460" method="POST" enctype="multipart/form-data">
+					<div class="inputDiv">
+						<label for="title">Название акции</label>
+						<input class="textInput" type="text" id="title" name="title" required="required" />
+					</div>
+					<div class="dateInput">
+						<div class="dateFrom">
+							<label for="date_from">Дата начала действия акции: </label>
+							<input type="date" id="date_from" name="date_from" required="required" />
+						</div>
+						
+						<div class="dateTo">
+							<label for="date_to">Дата окончания действия акции: </label>
+							<input type="date" id="date_to" name="date_to" />
+						</div>
+					</div>
+					<div class="regulationsInput">
+						<label> 
+							Регламент: <input type="checkbox" name="isRegulations" id="isRegulations" value="isRegulations" onchange="regulChange()"> 
+						</label>
+					</div>
+					<div class="regulationsType">
+						<label for="regulations_type">Тип регламента</label>
+						<select id="regulations_type" name="regulations_type" required="required">
+							<option value="Общие регламенты">Общие регламенты</option>
+							<option value="Регламенты по услугам">Регламенты по услугам</option>
+							<option value="Регламенты по сервису">Регламенты по сервису</option>
+							<option value="Регламенты по картам">Регламенты по картам</option>
+							<option value="Регламенты по работе с магазинами">Регламенты по работе с магазинами</option>
+						</select>
+					</div>
+					<div class="business_type">
+						<label for="business_type">Тип бизнеса</label>
+						<select id="business_type" name="business_type" required="required" >
+							<option value="Национальные акции">Национальные акции</option>
+							<option value="Отдел СЕ">Отдел СЕ</option>
+							<option value="Отдел РЕ">Отдел РЕ</option>
+							<option value="Отдел КБТ">Отдел КБТ</option>
+							<option value="Отдел МБТ">Отдел МБТ</option>
+							<option value="Отдел АКС">Отдел АКС</option>
+							<option value="Отдел HiTechnic">Отдел HiTechnic</option>
+						</select>
+					</div>
+					<div class="descriptionInput">
+						<label for="description">Краткое описание акции: </label><br>
+						<textarea id="description" name="description" class="descriptionTextarea" rows="5"></textarea>
+					</div>
+					<div class="fileInput">
+						<label for="fileInput">Добавить файл с приказом: </label>
+						<input type="file" id="fileInput" name="fileInput" required="required" >
+					</div>
+					<div class="inputDiv">
+						<label for="internet">Интернет-магазин</label>
+						<select id="internet" name="internet" required="required" >
+							<option value="Участвует">Участвует</option>
+							<option value="Не участвует">Не участвует</option>
+						</select>
+					</div>
+					<!-- <div class="blockAttributes">
+						<p><strong>Блок признаков</strong></p>
+						<div class="isEnded">
+							<label>
+						      <input type="checkbox" id="ended" name="ended" value="isEnded"> Закончена
+						    </label>
+						</div>
+						<div class="isNew">
+							<label>
+						      <input type="checkbox" id="n" name="n" value="isNew"> Новая
+						    </label>							
+						</div>
+						<div class="isActual">
+							<label>
+						      <input type="checkbox" id="actual" name="actual" value="isActual"> Актуальная
+						    </label>
+						</div>
+					</div> -->
+					<div class="saveButton">
+						<!--<button class="btn btn-primary save-btn" onclick="saveFormBtn()">Сохранить</button> -->
+						<button type="submit" class="btn btn-primary save-btn"">Сохранить</button>
+					</div>
+				</form>
+			</div>
+	</div>
+</div>
+</div>

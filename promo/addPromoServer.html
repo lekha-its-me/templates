@@ -1,0 +1,219 @@
+<!--<%
+
+//var title = Request.Form.title;
+//var date_from = Date(Request.Form.date_from);
+//var date_to = Date(Request.Form.date_to);
+//var business_type = Request.Form.business_type;
+//var description = Request.Form.description;
+
+//var internet = Request.Form.int;	
+//var e = Request.Form.ended;
+//var n = Request.Form.n;
+//var a = Request.Form.a;
+
+//var doc = OpenNewDoc('x-local://udt/udt_cc_promoution.xmd');
+//var fileName = title;
+//doc.TopElem.title = title;
+//doc.TopElem.date_from = date_from;
+//doc.TopElem.date_to = date_to;
+//doc.TopElem.business_type = business_type;
+//doc.TopElem.description = HtmlToPlainText(description);
+//doc.TopElem.internet = internet;
+//doc.TopElem.is_ended = e;
+//doc.TopElem.is_new = n;
+//doc.TopElem.is_actual = a;
+
+
+//doc.BindToDb();
+//doc.Save();
+
+//Сохранение документа
+//var fileInput = Request.Form.GetProperty( "fileInput" );
+//var tempFilePath 		= UrlToFilePath(global_settings.web_path + 'files/temp/');
+//PutFileData(tempFilePath , fileInput);
+
+//var docResource = OpenNewDoc( 'x-local://wtv/wtv_resource.xmd' );
+//docResource.TopElem.person_id = curUserID;
+//docResource.TopElem.put_str(LoadFileData(tempFilePath), fileName);
+
+//docResource.BindToDb();
+//docResource.Save();
+
+//Response.Write("Данные успешно сохранены!");
+%>
+-->
+
+<%
+
+	//Сохранение документа
+	try
+	{
+		var fileInput = Request.Form.GetProperty( "fileInput" );
+		var fileName	= fileInput.FileName;
+		var fileType	= String(fileName).split('.');
+		fileType		= StrLowerCase(fileType[ArrayCount(fileType)-1]);
+
+		var tempFilePath 		= UrlToFilePath(global_settings.web_path + 'files/temp/' + curUserID + '.' + fileType);
+		PutFileData(tempFilePath , fileInput);
+
+		var docResource = OpenNewDoc( 'x-local://wtv/wtv_resource.xmd' );
+		docResource.BindToDb();
+		docResource.TopElem.person_id = curUserID;
+		//docResource.TopElem.put_str(LoadFileData(tempFilePath), 'Файл ' + curUser.fullname + ' ' + StrDate(Date(), false, false) + '.' + fileType);
+		docResource.TopElem.put_str(LoadFileData(tempFilePath), fileName);
+
+		docResource.Save();	
+		DeleteFile(tempFilePath);
+	}
+	catch(e)
+	{
+		
+	}
+	var title = Request.Form.title;
+	var date_from = Date(Request.Form.date_from);
+	
+	if(Request.Form.date_to == '')
+	{
+		var date_to = Date('01.01.2999');
+	}
+	else 
+	{
+		var date_to = Date(Request.Form.date_to);
+	}
+	
+	var description = Request.Form.description;
+	var internet = Request.Form.internet;
+	
+	if(Request.Form.HasProperty('isRegulations')) {
+		var isRegulations = Request.Form.isRegulations;
+		var regulations_type = Request.Form.regulations_type;
+	} else {
+		var isRegulations = false;
+		var business_type = Request.Form.business_type;
+	}
+
+
+/*	if(Request.Form.HasProperty('ended')) {
+		var e = Request.Form.ended;
+	} else {
+		var e = false;
+	}
+
+	if(Request.Form.HasProperty('n')) {
+		var n = Request.Form.n;
+	} else {
+		var n = false;
+	}
+
+	if(Request.Form.HasProperty('actual')) {
+		var a = Request.Form.actual;
+	} else {
+		var a = false;
+	}*/
+
+	if(Request.Form.HasProperty('id'))
+	{
+		var doc = OpenDoc(UrlFromDocID(Int(Request.Form.id)));
+		doc.TopElem.title = title;
+		doc.TopElem.date_from = date_from;
+		if(Request.Form.date_to == '')
+		{
+			doc.TopElem.date_to = Date('01.01.2999');
+		}
+		else 
+		{
+			doc.TopElem.date_to = Date(Request.Form.date_to);
+		}
+		
+		doc.TopElem.description = HtmlToPlainText(description);
+		doc.TopElem.internet = internet;
+
+		try
+		{
+			doc.TopElem.file = docResource.DocID;
+		}
+		catch(e)
+		{
+
+		}
+
+		if(isRegulations == 'on') {
+			doc.TopElem.is_regulations = true;
+			doc.TopElem.business_type = '';
+			doc.TopElem.regulations_type = regulations_type;
+		}
+		else {
+			doc.TopElem.is_regulations = false;
+			doc.TopElem.regulations_type = '';
+			doc.TopElem.business_type = business_type;
+		}
+
+		
+
+
+		/*if(e == 'isEnded') {
+			doc.TopElem.is_ended = true;
+		} else {
+			doc.TopElem.is_ended = false;
+		}
+
+		if(n == 'isNew') {
+			doc.TopElem.is_new = true;
+		} else {
+			doc.TopElem.is_new = false;
+		}
+
+		if(a == 'isActual') {
+			doc.TopElem.is_actual = true;
+		} else {
+			doc.TopElem.is_actual = false;
+		}*/
+		doc.Save();
+	}
+	else 
+	{
+		var doc = OpenNewDoc('x-local://udt/udt_cc_promoution.xmd');
+		//var fileName = title;
+		doc.TopElem.title = title;
+		doc.TopElem.date_from = date_from;
+		doc.TopElem.date_to = date_to;
+		
+		doc.TopElem.description = HtmlToPlainText(description);
+		doc.TopElem.internet = internet;
+		doc.TopElem.file = docResource.DocID;
+		if(isRegulations == 'isRegulations') {
+			doc.TopElem.is_regulations = true;
+			doc.TopElem.business_type = '';
+			doc.TopElem.regulations_type = regulations_type;
+		}
+		else {
+			doc.TopElem.is_regulations = false
+			doc.TopElem.regulations_type = '';	
+			doc.TopElem.business_type = business_type;
+		}
+
+		
+
+		/*if(e == 'isEnded') {
+			doc.TopElem.is_ended = true;
+		} else {
+			doc.TopElem.is_ended = false;
+		}
+
+		if(n == 'isNew') {
+			doc.TopElem.is_new = true;
+		} else {
+			doc.TopElem.is_new = false;
+		}
+
+		if(a == 'isActual') {
+			doc.TopElem.is_actual = true;
+		} else {
+			doc.TopElem.is_actual = false;
+		}*/
+
+		doc.BindToDb();
+		doc.Save();
+	}
+	Request.Redirect('/view_doc.html?mode=doc_type&custom_web_template_id=6375000712467584219');
+%>

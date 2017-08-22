@@ -1,0 +1,152 @@
+.title {
+	margin-bottom: 0;
+	margin-top: -20px;
+	font-size: 18px;
+}
+
+.headTitle {
+	font-size: 18px;
+}
+
+.promoInfo {
+	width: 100%;
+	overflow: hidden;
+}
+
+.promoInfo div {
+	display:inline-block;
+}
+
+
+.description {
+	width: 60%;
+	text-align: justify;
+	float: left;
+	padding-right: 10px;
+}
+
+.date {
+	width: 15%;
+	border-left: 3px solid #F5F5F5;
+	padding-left: 5px;
+	text-align: center;
+	float: left;
+}
+
+.file {
+	width: 10%;
+	border-left: 3px solid #F5F5F5;
+	padding-left: 5px;
+	text-align: center;
+	float: left;
+}
+
+.internet {
+	width: 10%;
+	border-left: 3px solid #F5F5F5;
+	padding-left: 5px;
+	text-align: center;
+	float: left;
+}
+
+.addForm {
+	font-size: 18px;
+}
+
+.addForm SELECT {
+	font-size: 18px;
+	height: 22px;
+}
+
+.textInput {
+	border-radius: 2px;
+	margin-left: 5px;
+	width: 30%;
+}
+
+.dateInput {
+	display: inline-block;
+}
+
+.dateFrom {
+	float: left;
+	padding-right: 10px;
+	padding-top: 10px;
+}
+
+.dateTo {
+	float: left;
+	padding-top: 10px;
+}
+
+.business_type {
+	padding-top: 10px;
+}
+
+.descriptionInput {
+	padding-top: 10px;
+}
+
+.descriptionTextarea {
+	border-radius: 3px;
+	width: 55%;
+}
+
+.fileInput {
+	padding-top: 10px;
+}
+
+.isInternet {
+	padding-top: 10px;
+}
+
+.blockAttributes {
+	padding-top: 10px;
+	display: inline-block;
+}
+
+.blockAttributes div {
+	float: left;
+	margin-right: 20px;
+}
+
+.saveButton {
+	padding-top: 10px;
+}
+
+.active-promoutions h4 {
+	margin-left: 20px;
+	padding-left: 5px;
+	border-left: 3px solid #777;
+}
+
+.inputDiv{
+	padding-top: 10px;
+}
+
+.hide {
+	display: none;
+}
+
+.regulationsType {
+	padding-top: 10px;
+}
+
+.regulations-panel {
+	margin-top: 0;
+}
+
+.regulations h4 {
+	margin-left: 20px;
+	padding-left: 5px;
+	border-left: 3px solid #777;
+}
+
+.collapseAll {
+	font-size: 14px;
+	border-bottom: 3px dotted #e7e7e7;
+}
+
+.collapseAll:hover {
+	cursor: pointer;
+}
