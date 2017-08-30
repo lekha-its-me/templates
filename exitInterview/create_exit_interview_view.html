@@ -12,21 +12,26 @@
 		defaultPhoto = userDoc.TopElem.pict_url;
 	}
 
-	if(userDoc.TopElem.position_id.ForeignElem.is_boss==true){
-		var child = ArrayOptFirstElem(XQuery("for $elem in subdivisions where $elem/id="+userDoc.TopElem.position_parent_id+" return $elem"));
-		var bossId = ArrayOptFirstElem(XQuery("for $elem in collaborators where $elem/position_parent_id="+child.parent_object_id.ForeignElem.name+" and $elem/is_dismiss!=true() and ForeignElem($elem/position_id)/is_boss=true() return $elem"));
-	} else {
-		var bossId = ArrayOptFirstElem(XQuery("for $elem in collaborators where $elem/position_parent_id="+userDoc.TopElem.position_parent_id+" and $elem/is_dismiss!=true() and ForeignElem($elem/position_id)/is_boss=true() return $elem"));
-	}
-
+	var bossId = tools.get_user_boss(userDoc.TopElem.id);
+	
+	//if(userDoc.TopElem.position_id.ForeignElem.is_boss==true){
+		//var child = ArrayOptFirstElem(XQuery("for $elem in subdivisions where $elem/id="+userDoc.TopElem.position_parent_id+" return $elem"));
+		//var bossId = ArrayOptFirstElem(XQuery("for $elem in collaborators where $elem/position_parent_id="+child.parent_object_id.ForeignElem.id+" and $elem/is_dismiss!=true() and ForeignElem($elem/position_id)/is_boss=true() return $elem"));
+		// var bossId = tools.get_user_boss(userDoc.TopElem.id);
+	//var bossId = ArrayOptFirstElem(XQuery("for $elem in collaborators where $elem/position_parent_id="+userDoc.TopElem.org_id+" and $elem/is_dismiss!=true() return $elem"));
+	//} else {
+	 //var bossId = ArrayOptFirstElem(XQuery("for $elem in collaborators where $elem/position_parent_id="+userDoc.TopElem.position_parent_id+" and $elem/is_dismiss!=true() and ForeignElem($elem/position_id)/is_boss=true() return $elem"));
+	//	var bossId = tools.get_user_boss(userDoc.TopElem.id);
+	//}
 	
 	if(bossId == undefined){
 		isForSelect = false;
 		var childSub = ArrayOptFirstElem(XQuery("for $elem in subdivisions where $elem/id="+userDoc.TopElem.position_parent_id+" return $elem"));
-		alert(childSub.parent_object_id);
+		// alert(childSub.parent_object_id.ForeignElem.name);
 		var divList = ArrayExtractKeys(XQuery("for $elem in subdivisions where $elem/parent_object_id="+childSub.parent_object_id+" return $elem"),'id');
 		divList = divList.join(',');
-		var collabList = XQuery("for $elem in collaborators where MatchSome($elem/position_parent_id, "+divList+") order by $elem/fullname return $elem");
+		// var collabList = XQuery("for $elem in collaborators where MatchSome($elem/position_parent_id, "+divList+") order by $elem/fullname return $elem");
+		var collabList = XQuery("for $elem in collaborators where $elem/org_id="+userDoc.TopElem.org_id+" order by $elem/fullname return $elem");
 		%>	
 			<script>
 				$('#bossZone').hide();
