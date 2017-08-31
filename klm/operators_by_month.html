@@ -2,7 +2,7 @@
 	function showReport(){
 		var month_from = $('.month_from').val();
 		var month_to = $('.month_to').val();
-		var table = '<table class="table table-hover resultTable"><thead id="head"><tr class="head"><th>ФИО</th></tr></thead><tbody id="body"></tbody></table>'
+		var table = '<table class="table table-hover resultTable"><thead id="head"><tr class="head"><th>ФИО<tbody id="body"></tbody></table>'
 		/*$('.resultTable').hide();*/
 		$('.resultTable').empty();
 		$('.resultTable').html(table);
@@ -14,22 +14,34 @@
 				error: function(err) { alert("error ajax: "+err); },
 				success: function(resp)
 				{
-					var data = jQuery.parseJSON(resp);
+					if(resp == 'yearError'){
+						$('.defaultMessage').html('Выберите меньший период для отчета').show();
+					} else {
+						var data = jQuery.parseJSON(resp);
+						var tdDraw = '';
 
-					$('.defaultMessage').hide();
-					/*$('.resultTable').show();*/
-					
-					for(item in data) {
-						
+						$('.defaultMessage').hide();
+						/*$('.resultTable').show();*/
+						for(item in data) {
+							// $('#body').append('<tr><td>'+data[item].person+'</td><td>'+data[item].overall+'</td></tr>');
 
-						// $('#body').append('<tr><td>'+data[item].person+'</td><td>'+data[item].overall+'</td></tr>');
+							// $('#body').append('<tr class='+data[item].id+'></tr>');
+							// $('.'+data[item].id).append('<td>'+data[item].person+'</td>');
+							// for(mark in data[item].marks) {
+							// 	$('.head').append('<th>'+data[item].month+'</th>');
+							// 	$('.'+data[item].id).append('<td class='+mark+'>'+data[item].marks[mark].overall+'<td>');
+							// }
 
-						$('#body').append('<tr class='+data[item].id+'></tr>');
-						$('.'+data[item].id).append('<td>'+data[item].person+'</td>');
-						for(mark in data[item].marks) {
-							$('.head').append('<th>'+data[item].marks[mark].month+'</th>');
-							$('.'+data[item].id).append('<td class='+mark+'>'+data[item].marks[mark].overall+'<td>');
+							$('.head').append('<th>'+data[item].month+'</th>');
+							if(data[item].marks.length == 0){
+								tdDraw+='<td></td>';
+							}
+							for(mark in data[item].marks) {
+								$('#body').append('<tr id="'+data[item].marks[mark].id+'"><td>'+data[item].marks[mark].person);
+								$('#'+data[item].marks[mark].id+'').append(tdDraw + '<td>'+data[item].marks[mark].overall+'</td>');
+							}
 						}
+						$('.head').append('</th></tr></thead>');
 					}
 				}
 			});
@@ -55,14 +67,14 @@
 		<label for="month">Месяц начала</label>
 		<input type="month" class="month_from" name="month_from" id="month_from">
 		<label for="month">Месяц окончания</label>
-		<input type="month" class="month_to" name="month_to" id="month_to">
+		<input type="month" class="month_to" name="month_to" id="month_to" max="2017-08-31">
 		<button class="btn btn-default" onclick="showReport()">Показать отчет</button>
 	</div>
 </div>
 <div class="defaultMessage"></div>
 <div class="reportZone">
 	<table class="table table-hover resultTable">
-		<thead id="head"><tr class="head"><th>ФИО</th></tr></thead>
+		<thead id="head"><tr class="head"><th></th></tr></thead>
 		<tbody id="body">
 
 		</tbody>
@@ -71,6 +83,17 @@
 </div>
 
 <script>
+	$(document).ready(function(){
+		var d = new Date();
+		var year = d.getFullYear();
+		var month = d.getMonth()+1;
+
+		if(month < 10){
+			month = '0'+month;
+		}
+		maxDate = year+'-'+month;
+		$('#month_to').attr('max', maxDate);
+	});
 	function exportToExcel(){
 			open_in_excel_get($('.resultTable').html());
 		}

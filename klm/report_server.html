@@ -51,7 +51,9 @@ if(Request.Form.HasProperty('date')) {
 if(Request.Form.HasProperty('date_from')&&Request.Form.HasProperty('date_to')) {
 	var date_from = Request.Form.date_from + '-01';
 	var date_to = Request.Form.date_to + '-10';
-
+	var assessmentList = [];
+	var assList = [];
+	var arr = [];
 	var auditorysArr = [];
 	var doc = [];
 	var list = [];
@@ -61,43 +63,78 @@ if(Request.Form.HasProperty('date_from')&&Request.Form.HasProperty('date_to')) {
 	var totalOverall = 0;
 	var result = [];
 	var marksArr = [];
+	var dateArr = [];
+	var monthBegin = Month(Date(date_from));
+	var monthEnd = Month(Date(date_to));
+	var yearBegin = Year(Date(date_from));
+	var yearEnd = Year(Date(date_to));
 
-	var assessmentList = XQuery("for $elem in assessment_appraises where contains($elem/code, 'kln_') and $elem/start_date>='"+date_from+"' and $elem/start_date<='"+date_to+"' return $elem");
-	
-	for(assessm in assessmentList) {
-		list.push(assessm.id);
-		colls = OpenDoc(UrlFromDocID(Int(assessm.id))).TopElem.auditorys;
-
-		for(coll in colls) {
-			doc.push(coll.person_id);
+	// получаем массив дат по пор€дку, дл€ запроса к оценкам
+	var t = 0;
+	if((yearEnd - yearBegin)==0){
+		for(var i = monthBegin; i <= monthEnd; i++){
+			dateArr.push(yearEnd + '-' + (i < 10 ? '0'+i : i));
+		}
+	} else {
+		for(var k = yearBegin; k <= yearEnd; k++){
+			if(k != yearEnd){
+				for(t = monthBegin; t <=12; t++){
+					dateArr.push(yearBegin + '-' + (t < 10 ? '0'+t : t));
+				}
+			} else {
+				for(t = 1; t <=monthEnd; t++){
+					dateArr.push(yearEnd + '-' + (t < 10 ? '0'+t : t));
+				}
+			}
 		}
 	}
-	var assList = list.join(',');
-
-	var arr = ArraySelectDistinct(doc);
-	arr = arr.join(',');
-	auditorysArr = ArraySort((XQuery("for $elem in collaborators where MatchSome($elem/id, "+arr+") return $elem")), 'fullname', '+');
-	for(item in auditorysArr) {
-		paDocs = XQuery("for $elem in pas where MatchSome($elem/assessment_appraise_id, "+assList+") and $elem/person_id="+Int(item.id)+" order by ForeignElem($elem/assessment_appraise_id)/start_date return $elem");
-
-		for(pa in paDocs) {
-			_doc = OpenDoc(UrlFromDocID(pa.id));
-			overall+=Int(_doc.TopElem.overall);
-			pasCount++;
-			marksArr.push({month: String(_doc.TopElem.assessment_appraise_id.ForeignElem.start_date), overall: String(_doc.TopElem.overall)});
-		}
-		if(pasCount>0) {
-			totalOverall = overall / pasCount;
-		}
-		result.push({person: String(item.fullname), id:String(item.id), marks: marksArr, overall: String(totalOverall)});
-		overall = 0;
-		pasCount = 0;
-		totalOverall = 0;
-		paDocs = [];
-		marksArr = [];
+	if((yearEnd - yearBegin)>1){
+		Response.Write('yearError');
+	} else {
+		for(dateItem in dateArr){
+			assessmentList = XQuery("for $elem in assessment_appraises where contains($elem/code, 'kln_"+dateItem+"') return $elem");
 		
+			for(assessm in assessmentList) {
+				list.push(assessm.id);
+				colls = OpenDoc(UrlFromDocID(Int(assessm.id))).TopElem.auditorys;
+
+				for(coll in colls) {
+					doc.push(coll.person_id);
+				}
+			}
+			assList = list.join(',');
+
+			arr = ArraySelectDistinct(doc);
+			arr = arr.join(',');
+			auditorysArr = ArraySort((XQuery("for $elem in collaborators where MatchSome($elem/id, "+arr+") return $elem")), 'fullname', '+');
+			for(item in auditorysArr) {
+				paDocs = XQuery("for $elem in pas where MatchSome($elem/assessment_appraise_id, "+assList+") and $elem/person_id="+Int(item.id)+" order by ForeignElem($elem/assessment_appraise_id)/start_date return $elem");
+
+				for(pa in paDocs) {
+					_doc = OpenDoc(UrlFromDocID(pa.id));
+					overall+=Int(_doc.TopElem.overall);
+					pasCount++;
+					// marksArr.push({overall: String(_doc.TopElem.overall)});
+				}
+				if(pasCount>0) {
+					totalOverall = overall / pasCount;
+				}
+				result.push({person: String(item.fullname), id:String(item.id), overall: String(totalOverall)});
+				
+				overall = 0;
+				pasCount = 0;
+				totalOverall = 0;
+				paDocs = [];
+				
+				
+			}
+			marksArr.push({month: String(dateItem), marks: result});
+			result = [];
+			
+		}
+		var obj = tools.object_to_text(marksArr, 'json');
+		Response.Write(obj);
 	}
-	var obj = tools.object_to_text(result, 'json');
-	Response.Write(obj);
+	
 }
 %>
