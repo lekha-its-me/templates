@@ -2,7 +2,7 @@
 	if(Request.Form.HasProperty('date_from')){
 		var date_from = Request.Form.date_from;
 		var date_to = Request.Form.date_to;
-		var filled = XQuery("for $elem in cc_exitinterviews where $elem/is_done=true() and $elem/dismiss_date>='"+date_from+"' and $elem/dismiss_date<='"+date_to+"' return $elem");
+		var filled = XQuery("for $elem in cc_exitinterviews where $elem/dismiss_date>='"+date_from+"' and $elem/dismiss_date<='"+date_to+"' return $elem");
 	} else {
 		var filled = [];
 	}
