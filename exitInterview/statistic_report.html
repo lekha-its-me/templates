@@ -104,6 +104,7 @@
 	for(item in forms){
 		%>
 			<script>
+				console.log('<%=item.collab_id.ForeignElem.fullname%>');
 			question_2 = '<%=item.question_2%>';
 			question_2 = question_2.split(';');
 
@@ -150,7 +151,8 @@
 					case 'График работы' :
 						question_2_6++;
 						break;
-					case 'Свой вариант' :
+					//case 'Свой вариант' :
+					default :
 						question_2_7++;
 						break;
 					}
@@ -184,7 +186,8 @@
 					case 'Тяжелые условия труда (шум, грязь, темно, жарко, и т.д.)' :
 						question_3_8++;
 						break;
-					case 'Свой вариант' :
+					// case 'Свой вариант' :
+					default :
 						question_3_9++;
 						break;
 					}
@@ -227,7 +230,8 @@
 					case 'Сокращение' :
 						question_4_11++;
 						break;
-					case 'Свой вариант' :
+					// case 'Свой вариант' :
+					default :
 						question_4_12++;
 						break;
 					}
@@ -670,7 +674,7 @@
 			current = eval($(this).attr('id'));
 			$(this).text(current);
 			total = eval('question_'+i+'_count');
-			percent = (parseInt(current)/parseInt(total))*100;
+			percent = ((parseInt(current)/parseInt(total))*100).toFixed(2);
 			if(isNaN(percent)){
 				percent=0;
 			}
