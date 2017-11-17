@@ -19,25 +19,18 @@
 					} else {
 						var data = jQuery.parseJSON(resp);
 						var tdDraw = '';
-
+						console.log(data);
 						$('.defaultMessage').hide();
 						/*$('.resultTable').show();*/
 						for(item in data) {
-							// $('#body').append('<tr><td>'+data[item].person+'</td><td>'+data[item].overall+'</td></tr>');
-
-							// $('#body').append('<tr class='+data[item].id+'></tr>');
-							// $('.'+data[item].id).append('<td>'+data[item].person+'</td>');
-							// for(mark in data[item].marks) {
-							// 	$('.head').append('<th>'+data[item].month+'</th>');
-							// 	$('.'+data[item].id).append('<td class='+mark+'>'+data[item].marks[mark].overall+'<td>');
-							// }
-
 							$('.head').append('<th>'+data[item].month+'</th>');
 							if(data[item].marks.length == 0){
 								tdDraw+='<td></td>';
 							}
 							for(mark in data[item].marks) {
-								$('#body').append('<tr id="'+data[item].marks[mark].id+'"><td>'+data[item].marks[mark].person);
+								if(!$('#'+data[item].marks[mark].id+'').length){
+									$('#body').append('<tr id="'+data[item].marks[mark].id+'"><td>'+data[item].marks[mark].person);
+								}
 								$('#'+data[item].marks[mark].id+'').append(tdDraw + '<td>'+data[item].marks[mark].overall+'</td>');
 							}
 						}

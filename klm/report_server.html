@@ -93,43 +93,45 @@ if(Request.Form.HasProperty('date_from')&&Request.Form.HasProperty('date_to')) {
 	} else {
 		for(dateItem in dateArr){
 			assessmentList = XQuery("for $elem in assessment_appraises where contains($elem/code, 'kln_"+dateItem+"') return $elem");
-		
-			for(assessm in assessmentList) {
-				list.push(assessm.id);
-				colls = OpenDoc(UrlFromDocID(Int(assessm.id))).TopElem.auditorys;
+			if(ArrayCount(assessmentList)){
+				for(assessm in assessmentList) {
+					list.push(assessm.id);
+					colls = OpenDoc(UrlFromDocID(Int(assessm.id))).TopElem.auditorys;
 
-				for(coll in colls) {
-					doc.push(coll.person_id);
+					for(coll in colls) {
+						doc.push(coll.person_id);
+					}
 				}
+				assList = list.join(',');
+
+				arr = ArraySelectDistinct(doc);
+				arr = arr.join(',');
+				auditorysArr = ArraySort((XQuery("for $elem in collaborators where MatchSome($elem/id, "+arr+") return $elem")), 'fullname', '+');
+				for(item in auditorysArr) {
+					paDocs = XQuery("for $elem in pas where MatchSome($elem/assessment_appraise_id, "+assList+") and $elem/person_id="+Int(item.id)+" order by ForeignElem($elem/assessment_appraise_id)/start_date return $elem");
+
+					for(pa in paDocs) {
+						_doc = OpenDoc(UrlFromDocID(pa.id));
+						overall+=Real(_doc.TopElem.overall);
+						pasCount++;
+						// marksArr.push({overall: String(_doc.TopElem.overall)});
+					}
+					if(pasCount>0) {
+						totalOverall = overall / pasCount;
+						totalOverall = Real(Math.round(totalOverall*100))/100;
+					}
+					result.push({person: String(item.fullname), id:String(item.id), overall: String(totalOverall)});
+					
+					overall = 0;
+					pasCount = 0;
+					totalOverall = 0;
+					paDocs = [];
+					
+					
+				}
+				marksArr.push({month: String(dateItem), marks: result});
+				result = [];
 			}
-			assList = list.join(',');
-
-			arr = ArraySelectDistinct(doc);
-			arr = arr.join(',');
-			auditorysArr = ArraySort((XQuery("for $elem in collaborators where MatchSome($elem/id, "+arr+") return $elem")), 'fullname', '+');
-			for(item in auditorysArr) {
-				paDocs = XQuery("for $elem in pas where MatchSome($elem/assessment_appraise_id, "+assList+") and $elem/person_id="+Int(item.id)+" order by ForeignElem($elem/assessment_appraise_id)/start_date return $elem");
-
-				for(pa in paDocs) {
-					_doc = OpenDoc(UrlFromDocID(pa.id));
-					overall+=Int(_doc.TopElem.overall);
-					pasCount++;
-					// marksArr.push({overall: String(_doc.TopElem.overall)});
-				}
-				if(pasCount>0) {
-					totalOverall = overall / pasCount;
-				}
-				result.push({person: String(item.fullname), id:String(item.id), overall: String(totalOverall)});
-				
-				overall = 0;
-				pasCount = 0;
-				totalOverall = 0;
-				paDocs = [];
-				
-				
-			}
-			marksArr.push({month: String(dateItem), marks: result});
-			result = [];
 			
 		}
 		var obj = tools.object_to_text(marksArr, 'json');
