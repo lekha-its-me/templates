@@ -1,0 +1,92 @@
+<script>
+	function showReport(){
+		var month_from = $('.month_from').val();
+		var month_to = $('.month_to').val();
+		var table = '<table class="table table-hover resultTable"><thead id="head"><tr class="head"><th>ФИО<tbody id="body"></tbody></table>'
+		/*$('.resultTable').hide();*/
+		$('.resultTable').empty();
+		$('.resultTable').html(table);
+		$('.defaultMessage').html('Загрузка...').show();
+		$.ajax({
+				type:"POST",
+				url: "custom_web_template.html?object_id=6449308126156042703",
+				data: 'date_from=' + month_from + '&date_to=' + month_to,
+				error: function(err) { alert("error ajax: "+err); },
+				success: function(resp)
+				{
+					if(resp == 'yearError'){
+						$('.defaultMessage').html('Выберите меньший период для отчета').show();
+					} else {
+						var data = jQuery.parseJSON(resp);
+						var tdDraw = '';
+						$('.defaultMessage').hide();
+						/*$('.resultTable').show();*/
+						for(item in data) {
+							$('.head').append('<th>'+data[item].month+'</th>');
+							if(data[item].marks.length == 0){
+								tdDraw+='<td></td>';
+							}
+							for(mark in data[item].marks) {
+								if(!$('#'+data[item].marks[mark].id+'').length){
+									$('#body').append('<tr id="'+data[item].marks[mark].id+'"><td>'+data[item].marks[mark].person);
+								}
+								$('#'+data[item].marks[mark].id+'').append(tdDraw + '<td>'+data[item].marks[mark].overall+'</td>');
+							}
+						}
+						$('.head').append('</th></tr></thead>');
+					}
+				}
+			});
+	}
+
+	function open_in_excel_get(data_string){
+			data_string = $('.resultTable').html();
+			$.ajax({
+				type:"POST",
+				url: "custom_web_template.html?object_id=6449294203009509668",
+				data: 'operator=' + data_string,
+				error: function(err) { alert("error ajax: "+err); },
+				success: function(resp)
+				{
+					location.href = 'assessment_excel_export.html';
+				}
+			});
+		}
+</script>
+
+<div class="inputZone">
+	<div class="form-group">
+		<label for="month">Месяц начала</label>
+		<input type="month" class="month_from" name="month_from" id="month_from">
+		<label for="month">Месяц окончания</label>
+		<input type="month" class="month_to" name="month_to" id="month_to" max="2017-08-31">
+		<button class="btn btn-default" onclick="showReport()">Показать отчет</button>
+	</div>
+</div>
+<div class="defaultMessage"></div>
+<div class="reportZone">
+	<table class="table table-hover resultTable">
+		<thead id="head"><tr class="head"><th></th></tr></thead>
+		<tbody id="body">
+
+		</tbody>
+	</table>
+	<input type="button" class="btn btn-default" value="Экспорт в Excel" onclick="exportToExcel()">
+</div>
+
+<script>
+	$(document).ready(function(){
+		var d = new Date();
+		var year = d.getFullYear();
+		var month = d.getMonth()+1;
+
+		if(month < 10){
+			month = '0'+month;
+		}
+		maxDate = year+'-'+month;
+		$('#month_to').attr('max', maxDate);
+	});
+	function exportToExcel(){
+			open_in_excel_get($('.resultTable').html());
+		}
+</script>
